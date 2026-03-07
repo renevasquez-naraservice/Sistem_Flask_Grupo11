@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+pythonenv.*
+
+# Flask
+instance/
+.webassets-cache
+.env
+.flaskenv
+*.log
+
+# Base de datos
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+htmlcov/
+.coverage
+.tox/
+
+# Distribución
+dist/
+build/
+*.egg-info/
+
+# Migrations
+migrations/__pycache__/
+!migrations/versions/
