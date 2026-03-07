@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Perfil - Plantilla Flask{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow fade-in">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Perfil</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('auth.editar_perfil') }}">
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="bi bi-person"></i> Información Básica
+                    </h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" 
+                                   value="{{ user.nombre }}" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="apellido" class="form-label">Apellido *</label>
+                            <input type="text" class="form-control" id="apellido" name="apellido" 
+                                   value="{{ user.apellido }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo Electrónico *</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ user.email }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="telefono" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="telefono" name="telefono" 
+                               value="{{ user.telefono or '' }}">
+                    </div>
+                    
+                    <h6 class="border-bottom pb-2 mb-3 mt-4">
+                        <i class="bi bi-lock"></i> Cambiar Contraseña (opcional)
+                    </h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="new_password" class="form-label">Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password">
+                            <small class="text-muted">Déjalo en blanco para no cambiar</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="confirm_password" class="form-label">Confirmar Contraseña</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('auth.perfil') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

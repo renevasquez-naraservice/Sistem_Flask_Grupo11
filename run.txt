@@ -1,0 +1,12 @@
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+
+flask db upgrade 
+______________________________
+MIGRACIONES
+flask db init
+flask db migrate -m "Initial migration: users"
+
+flask db stamp head
+flask db revision -m "initial schema"

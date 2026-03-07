@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión - Acceso al Sistema{% endblock %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center min-vh-75 mt-5">
+    <div class="col-md-5 col-lg-4">
+        <!-- Contenedor Principal con Sombra Suave -->
+        <div class="card border-0 shadow-lg fade-in rounded-4 overflow-hidden">
+            
+            <!-- Encabezado con Degradado Moderno -->
+            <div class="card-header bg-gradient-dark py-4 text-center border-0">
+                <div class="brand-icon mb-2">
+                    <i class="bi bi-shield-lock-fill text-white display-5"></i>
+                </div>
+                <h4 class="text-white fw-bold mb-0">Bienvenido</h4>
+                <p class="text-white-50 small mb-0">Ingresa tus credenciales para continuar</p>
+            </div>
+
+            <div class="card-body p-4 p-lg-5">
+                <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="off">
+                    
+                    <!-- Campo Usuario -->
+                    <div class="mb-3">
+                        <label for="username" class="form-label small fw-bold text-muted text-uppercase">Usuario</label>
+                        <div class="input-group input-group-modern">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="bi bi-person text-primary"></i>
+                            </span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="username" name="username" 
+                                   placeholder="ej: admin" required autofocus>
+                        </div>
+                    </div>
+                    
+                    <!-- Campo Contraseña -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between">
+                            <label for="password" class="form-label small fw-bold text-muted text-uppercase">Contraseña</label>
+                            <!-- <a href="#" class="text-decoration-none small text-primary">¿Olvidaste tu clave?</a> -->
+                        </div>
+                        <div class="input-group input-group-modern">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="bi bi-key text-primary"></i>
+                            </span>
+                            <input type="password" class="form-control border-start-0 ps-0" id="password" name="password" 
+                                   placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Opciones de Sesión -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                            <label class="form-check-label small text-muted" for="remember">Mantener sesión</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Botón de Acción -->
+                    <div class="d-grid mb-4">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold rounded-3 shadow-sm py-2">
+                            Entrar al Sistema <i class="bi bi-arrow-right-short ms-1"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center">
+                    <span class="text-muted small">¿Nuevo aquí?</span>
+                    <a href="{{ url_for('auth.registro') }}" class="text-decoration-none small fw-bold ms-1">
+                        Crea una cuenta gratuita
+                    </a>
+                </div>
+            </div>
+
+            <!-- Ayuda de Acceso (Solo para desarrollo) -->
+            <div class="card-footer bg-light border-0 text-center py-3">
+                <p class="mb-0 x-small text-muted italic">
+                    <i class="bi bi-info-circle me-1"></i> Prueba con: <strong>admin</strong> / <strong>admin123</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

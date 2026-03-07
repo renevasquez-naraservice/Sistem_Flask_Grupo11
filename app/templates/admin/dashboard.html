@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Control - {{ current_user.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Encabezado con Bienvenida Dinámica -->
+    <div class="d-flex justify-content-between align-items-center mb-4 fade-in">
+        <div>
+            <h1 class="h2 mb-0"><i class="bi bi-speedometer2 text-primary"></i> Dashboard Administrativo</h1>
+            <p class="text-muted">Bienvenido de nuevo, {{ current_user.nombre_completo }}</p>
+        </div>
+        <span class="badge bg-soft-primary text-primary p-2">
+            <i class="bi bi-shield-check"></i> Rol: {{ current_user.role | capitalize }}
+        </span>
+    </div>
+
+    <div class="row">
+        <!-- Tarjeta de Estadísticas Mejorada -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 fade-in" style="border-left: 4px solid #0d6efd !important;">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Usuarios</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_usuarios }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people-fill fa-2x text-gray-300" style="font-size: 2rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Sistema con Estilo Moderno -->
+        <div class="col-xl-6 col-lg-7 mb-4">
+            <div class="card shadow-sm border-0 fade-in">
+                <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-dark"><i class="bi bi-cpu text-info"></i> Estado del Sistema</h6>
+                    <span class="badge bg-success">En línea</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted"><i class="bi bi-code-slash me-2"></i>Versión Flask:</td>
+                                    <td class="text-end fw-bold">2.3.3</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted"><i class="bi bi-person-badge me-2"></i>Sesión iniciada como:</td>
+                                    <td class="text-end fw-bold">{{ current_user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted"><i class="bi bi-calendar3 me-2"></i>Último acceso:</td>
+                                    <td class="text-end fw-bold small">
+                                        {{ current_user.ultimo_acceso.strftime('%d/%m/%Y %H:%M') if current_user.ultimo_acceso else 'Primer acceso' }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="col-xl-3 col-lg-5 mb-4">
+            <div class="card shadow-sm border-0 fade-in">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-dark"><i class="bi bi-lightning-charge text-warning"></i> Acciones</h6>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    <a href="{{ url_for('auth.perfil') }}" class="btn btn-outline-primary btn-sm text-start">
+                        <i class="bi bi-person-gear"></i> Mi Perfil
+                    </a>
+                    <a href="{{ url_for('admin.index') }}" class="btn btn-outline-dark btn-sm text-start">
+                        <i class="bi bi-kanban"></i> Gestionar Usuarios
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

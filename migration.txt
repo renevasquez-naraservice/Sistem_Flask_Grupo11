@@ -1,0 +1,14 @@
+# 1. Haces cambios en los modelos (ej. nuevo campo)
+# 2. Generas migración
+flask db migrate -m "descripción del cambio"
+
+# 3. Revisas el archivo generado en migrations/versions/
+# 4. Aplicas el cambio
+flask db upgrade
+
+# 5. Subes los cambios a Git
+git add migrations/versions/
+git commit -m "feat: agregar campo X a tabla Y"
+git push
+
+_________________________________________________________

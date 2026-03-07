@@ -1,0 +1,28 @@
+# Framework principal
+Flask==2.3.3
+
+# Base de datos
+Flask-SQLAlchemy==3.1.1
+# Para MySQL (opcional - descomentar si se usa)
+PyMySQL==1.1.0
+cryptography==41.0.7
+
+# Migraciones
+Flask-Migrate==4.0.5
+
+# Autenticación
+Flask-Login==0.6.2
+
+# Panel administrativo
+Flask-Admin==1.6.1
+
+# Formularios y validaciones
+Flask-WTF==1.2.1
+WTForms==3.1.0
+email-validator==2.1.0
+
+# Utilidades
+python-dotenv==1.0.0
+Werkzeug==2.3.7
+setuptools<82
+pytz==2024.1
