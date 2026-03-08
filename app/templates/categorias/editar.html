@@ -1,17 +1,66 @@
-<h1>Editar Categoría</h1>
+<div class="modal-header">
 
-<form method="POST">
+    <h5 class="modal-title">
+        <i class="bi bi-pencil text-warning"></i>
+        Editar Categoría
+    </h5>
 
-    <label>Nombre</label>
-    <input type="text" name="nombre" value="{{ categoria.nombre }}">
+    <button class="btn-close" data-bs-dismiss="modal"></button>
 
-    <br><br>
+</div>
 
-    <label>Descripción</label>
-    <input type="text" name="descripcion" value="{{ categoria.descripcion }}">
 
-    <br><br>
+<form method="POST"
+      action="{{ url_for('categorias.editar', id=categoria.id) }}">
 
-    <button type="submit">Actualizar</button>
+<div class="modal-body">
+
+    <div class="mb-3">
+
+        <label class="form-label fw-semibold">
+            Nombre
+        </label>
+
+        <input type="text"
+               name="nombre"
+               class="form-control"
+               value="{{ categoria.nombre }}"
+               required>
+
+    </div>
+
+
+    <div class="mb-3">
+
+        <label class="form-label fw-semibold">
+            Descripción
+        </label>
+
+        <textarea name="descripcion"
+                  class="form-control"
+                  rows="3">{{ categoria.descripcion }}</textarea>
+
+    </div>
+
+</div>
+
+
+<div class="modal-footer">
+
+    <button type="button"
+            class="btn btn-outline-secondary"
+            data-bs-dismiss="modal">
+        Cancelar
+    </button>
+
+    <button type="submit"
+            class="btn btn-warning">
+
+        <i class="bi bi-check-circle"></i>
+        Actualizar
+
+    </button>
+
+</div>
 
 </form>

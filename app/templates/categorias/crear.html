@@ -1,17 +1,66 @@
-<h1>Crear Categoría</h1>
+<div class="modal-header">
 
-<form method="POST">
+    <h5 class="modal-title">
+        <i class="bi bi-plus-circle text-primary"></i>
+        Nueva Categoría
+    </h5>
 
-    <label>Nombre</label>
-    <input type="text" name="nombre">
+    <button class="btn-close" data-bs-dismiss="modal"></button>
 
-    <br><br>
+</div>
 
-    <label>Descripción</label>
-    <input type="text" name="descripcion">
 
-    <br><br>
+<form method="POST" action="{{ url_for('categorias.crear') }}">
 
-    <button type="submit">Guardar</button>
+<div class="modal-body">
+
+    <div class="mb-3">
+
+        <label class="form-label fw-semibold">
+            Nombre
+        </label>
+
+        <input type="text"
+               name="nombre"
+               class="form-control"
+               placeholder="Ej: Bebidas"
+               required>
+
+    </div>
+
+
+    <div class="mb-3">
+
+        <label class="form-label fw-semibold">
+            Descripción
+        </label>
+
+        <textarea name="descripcion"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Descripción opcional"></textarea>
+
+    </div>
+
+</div>
+
+
+<div class="modal-footer">
+
+    <button type="button"
+            class="btn btn-outline-secondary"
+            data-bs-dismiss="modal">
+        Cancelar
+    </button>
+
+    <button type="submit"
+            class="btn btn-primary">
+
+        <i class="bi bi-save"></i>
+        Guardar
+
+    </button>
+
+</div>
 
 </form>
