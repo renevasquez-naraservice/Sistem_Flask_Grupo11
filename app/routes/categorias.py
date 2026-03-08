@@ -11,7 +11,11 @@ categorias_bp = Blueprint(
 @categorias_bp.route("/")
 def lista():
     categorias = Categoria.query.all()
-    return render_template("categorias/lista.html", categorias=categorias)
+
+    return render_template(
+        "categorias/lista.html",
+        categorias=categorias
+    )
 
 
 @categorias_bp.route("/crear", methods=["GET", "POST"])
@@ -20,10 +24,12 @@ def crear():
     if request.method == "POST":
         nombre = request.form["nombre"]
         descripcion = request.form["descripcion"]
+        activo = "activo" in request.form
 
         nueva_categoria = Categoria(
             nombre=nombre,
-            descripcion=descripcion
+            descripcion=descripcion,
+            activo=activo
         )
 
         db.session.add(nueva_categoria)
@@ -42,12 +48,16 @@ def editar(id):
     if request.method == "POST":
         categoria.nombre = request.form["nombre"]
         categoria.descripcion = request.form["descripcion"]
+        categoria.activo = "activo" in request.form
 
         db.session.commit()
 
         return redirect(url_for("categorias.lista"))
 
-    return render_template("categorias/editar.html", categoria=categoria)
+    return render_template(
+        "categorias/editar.html",
+        categoria=categoria
+    )
 
 @categorias_bp.route("/eliminar/<int:id>")
 def eliminar(id):

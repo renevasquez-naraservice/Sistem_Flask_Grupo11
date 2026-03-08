@@ -1,65 +1,79 @@
 <div class="modal-header">
 
-    <h5 class="modal-title">
-        <i class="bi bi-pencil text-warning"></i>
-        Editar Categoría
-    </h5>
+<h5 class="modal-title">
+<i class="bi bi-pencil text-warning"></i>
+Editar Categoría
+</h5>
 
-    <button class="btn-close" data-bs-dismiss="modal"></button>
+<button class="btn-close" data-bs-dismiss="modal"></button>
 
 </div>
 
 
 <form method="POST"
-      action="{{ url_for('categorias.editar', id=categoria.id) }}">
+action="{{ url_for('categorias.editar', id=categoria.id) }}">
 
 <div class="modal-body">
 
-    <div class="mb-3">
+<div class="mb-3">
 
-        <label class="form-label fw-semibold">
-            Nombre
-        </label>
+<label class="form-label fw-semibold">
+Nombre
+</label>
 
-        <input type="text"
-               name="nombre"
-               class="form-control"
-               value="{{ categoria.nombre }}"
-               required>
+<input type="text"
+name="nombre"
+class="form-control"
+value="{{ categoria.nombre }}"
+required>
 
-    </div>
+</div>
 
 
-    <div class="mb-3">
+<div class="mb-3">
 
-        <label class="form-label fw-semibold">
-            Descripción
-        </label>
+<label class="form-label fw-semibold">
+Descripción
+</label>
 
-        <textarea name="descripcion"
-                  class="form-control"
-                  rows="3">{{ categoria.descripcion }}</textarea>
+<textarea name="descripcion"
+class="form-control"
+rows="3">{{ categoria.descripcion }}</textarea>
 
-    </div>
+</div>
+
+
+<div class="form-check">
+
+<input class="form-check-input"
+type="checkbox"
+name="activo"
+{% if categoria.activo %}checked{% endif %}>
+
+<label class="form-check-label">
+Categoría activa
+</label>
+
+</div>
 
 </div>
 
 
 <div class="modal-footer">
 
-    <button type="button"
-            class="btn btn-outline-secondary"
-            data-bs-dismiss="modal">
-        Cancelar
-    </button>
+<button class="btn btn-outline-secondary"
+data-bs-dismiss="modal">
 
-    <button type="submit"
-            class="btn btn-warning">
+Cancelar
 
-        <i class="bi bi-check-circle"></i>
-        Actualizar
+</button>
 
-    </button>
+<button class="btn btn-warning">
+
+<i class="bi bi-check-circle"></i>
+Actualizar
+
+</button>
 
 </div>
 
