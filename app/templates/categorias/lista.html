@@ -8,6 +8,9 @@
         <a href="{{ url_for('categorias.editar', id=categoria.id) }}">
             Editar
         </a>
+        <a href="{{ url_for('categorias.eliminar', id=categoria.id) }}">
+            Eliminar
+        </a>
     </li>
 {% endfor %}
 </ul>

@@ -48,3 +48,13 @@ def editar(id):
         return redirect(url_for("categorias.lista"))
 
     return render_template("categorias/editar.html", categoria=categoria)
+
+@categorias_bp.route("/eliminar/<int:id>")
+def eliminar(id):
+
+    categoria = Categoria.query.get_or_404(id)
+
+    db.session.delete(categoria)
+    db.session.commit()
+
+    return redirect(url_for("categorias.lista"))
