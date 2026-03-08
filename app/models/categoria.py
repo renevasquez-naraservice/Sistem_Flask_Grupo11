@@ -9,11 +9,11 @@ class Categoria(db.Model):
     activo = db.Column(db.Boolean, default=True)
 
     # aca esta la relacion con productos 
-    #productos = db.relationship(
-    #    "Producto",
-    #    backref="categoria",
-    #    lazy=True
-    #)
+    productos = db.relationship(
+        "Producto",
+        backref="categoria",
+        lazy=True
+    )
 
     def __repr__(self):
         return f"<Categoria {self.nombre}>"
