@@ -2,6 +2,12 @@
 
 <ul>
 {% for categoria in categorias %}
-    <li>{{ categoria.nombre }}</li>
+    <li>
+        {{ categoria.nombre }}
+
+        <a href="{{ url_for('categorias.editar', id=categoria.id) }}">
+            Editar
+        </a>
+    </li>
 {% endfor %}
 </ul>

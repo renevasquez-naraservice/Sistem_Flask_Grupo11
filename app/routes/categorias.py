@@ -34,7 +34,17 @@ def crear():
     return render_template("categorias/crear.html")
 
 
-@categorias_bp.route("/editar/<int:id>")
+@categorias_bp.route("/editar/<int:id>", methods=["GET", "POST"])
 def editar(id):
+
     categoria = Categoria.query.get_or_404(id)
+
+    if request.method == "POST":
+        categoria.nombre = request.form["nombre"]
+        categoria.descripcion = request.form["descripcion"]
+
+        db.session.commit()
+
+        return redirect(url_for("categorias.lista"))
+
     return render_template("categorias/editar.html", categoria=categoria)
