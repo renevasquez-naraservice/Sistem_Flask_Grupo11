@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Nuevo Usuario{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Migas de pan -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_usuarios.usuarios') }}">Usuarios</a></li>
+            <li class="breadcrumb-item active">Crear Usuario</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-plus"></i> Crear Nuevo Usuario</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_usuarios.crear') }}">
+                        <!-- Información personal -->
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-person"></i> Información Personal
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" 
+                                       placeholder="Ej: Juan" required autofocus>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="apellido" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="apellido" name="apellido" 
+                                       placeholder="Ej: Pérez" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Correo Electrónico *</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="ejemplo@correo.com" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="telefono" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="telefono" name="telefono" 
+                                       placeholder="Ej: 71234567">
+                            </div>
+                        </div>
+
+                        <!-- Credenciales de acceso -->
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">
+                            <i class="bi bi-key"></i> Credenciales de Acceso
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Nombre de Usuario *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">@</span>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           placeholder="ej: juan123" required>
+                                </div>
+                                <small class="text-muted">Único, usado para iniciar sesión</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="role" class="form-label">Rol *</label>
+                                <select class="form-select" id="role" name="role" required>
+                                    <option value="" disabled selected>Seleccionar rol...</option>
+                                    {% for rol in roles %}
+                                    <option value="{{ rol }}">{{ rol|capitalize }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Contraseña *</label>
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       placeholder="Mínimo 6 caracteres" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="confirm_password" class="form-label">Confirmar Contraseña *</label>
+                                <input type="password" class="form-control" id="confirm_password" 
+                                       name="confirm_password" placeholder="Repite la contraseña" required>
+                            </div>
+                        </div>
+
+                        <!-- Estado de la cuenta -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="activo" name="activo" checked>
+                                    <label class="form-check-label" for="activo">
+                                        <strong>Cuenta activa</strong> 
+                                        <span class="text-muted">(El usuario podrá iniciar sesión)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="mt-4">
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_usuarios.usuarios') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Crear Usuario
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Validación de contraseñas en tiempo real
+document.getElementById('confirm_password').addEventListener('input', function() {
+    var password = document.getElementById('password').value;
+    var confirm = this.value;
+    
+    if (password !== confirm) {
+        this.setCustomValidity('Las contraseñas no coinciden');
+        this.classList.add('is-invalid');
+        this.classList.remove('is-valid');
+    } else {
+        this.setCustomValidity('');
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+    }
+});
+
+// Validación de longitud de contraseña
+document.getElementById('password').addEventListener('input', function() {
+    if (this.value.length < 6) {
+        this.setCustomValidity('La contraseña debe tener al menos 6 caracteres');
+        this.classList.add('is-invalid');
+        this.classList.remove('is-valid');
+    } else {
+        this.setCustomValidity('');
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

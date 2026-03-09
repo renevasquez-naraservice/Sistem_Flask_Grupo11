@@ -25,12 +25,14 @@ def create_app(config_class=Config):
     from .routes.admin import admin_dashboard_bp        # De admin.py 
     from .routes.categorias import categorias_bp        # De categoria.py
     from .routes.productos import productos_bp
+    from .routes.admin_usuarios import admin_usuarios_bp        # De admin_usuarios.py
     
     # Registrar blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_dashboard_bp)          # Registrar el blueprint admin
     app.register_blueprint(categorias_bp)               # Registrar el blueprint categoria
     app.register_blueprint(productos_bp)
+    app.register_blueprint(admin_usuarios_bp)         # Registrar el blueprint de usuarios
     
     return app
 
