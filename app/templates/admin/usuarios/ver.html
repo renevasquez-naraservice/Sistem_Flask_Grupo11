@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Usuario - {{ usuario.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="container py-0">
+
+    <!-- Migas de pan -->
+    <nav aria-label="breadcrumb" class="mb-1">
+        <ol class="breadcrumb bg-light rounded px-3 py-2 shadow-sm">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('admin_usuarios.usuarios') }}" class="text-decoration-none">
+                    <i class="bi bi-people"></i> Usuarios
+                </a>
+            </li>
+            <li class="breadcrumb-item active fw-semibold">{{ usuario.nombre_completo }}</li>
+        </ol>
+    </nav>
+
+    <!-- Botón crear -->
+    <div class="d-flex justify-content-end mb-4">
+        <a href="{{ url_for('admin_usuarios.crear') }}" class="btn btn-success shadow-sm">
+            <i class="bi bi-person-plus"></i> Crear Nuevo Usuario
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Columna izquierda: Perfil -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-lg h-100">
+                <div class="card-header bg-gradient bg-primary text-white text-center py-3">
+                    <h5 class="mb-0"><i class="bi bi-person-badge"></i> Perfil de Usuario</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="display-1 text-primary mb-3">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <h3 class="fw-bold">{{ usuario.nombre_completo }}</h3>
+                    <p class="text-muted">@{{ usuario.username }}</p>
+
+                    <!-- Badges -->
+                    <div class="mb-3">
+                        <span class="badge rounded-pill bg-{{ 'danger' if usuario.role == 'admin' else 'info' }} px-3 py-2 fs-6">
+                            <i class="bi bi-shield-lock"></i> {{ usuario.role|upper }}
+                        </span>
+                        <span class="badge rounded-pill bg-{{ 'success' if usuario.activo else 'secondary' }} px-3 py-2 fs-6 ms-2">
+                            <i class="bi bi-{{ 'check-circle' if usuario.activo else 'x-circle' }}"></i>
+                            {{ 'Activo' if usuario.activo else 'Inactivo' }}
+                        </span>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Datos -->
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="text-muted small fw-bold">Correo Electrónico</label>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-envelope text-primary me-2"></i>
+                                <span>{{ usuario.email }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="text-muted small fw-bold">Teléfono</label>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-telephone text-primary me-2"></i>
+                                <span>{{ usuario.telefono or 'No registrado' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="text-muted small fw-bold">Fecha de Registro</label>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar-check text-primary me-2"></i>
+                                <span>{{ usuario.fecha_registro.strftime('%d/%m/%Y %H:%M') }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="text-muted small fw-bold">Último Acceso</label>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-clock-history text-primary me-2"></i>
+                                {% if usuario.ultimo_acceso %}
+                                    <span>{{ usuario.ultimo_acceso_local.strftime('%d/%m/%Y %H:%M') }}</span>
+                                {% else %}
+                                    <span class="text-muted fst-italic">Nunca ha iniciado sesión</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light border-0">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin_usuarios.editar', id=usuario.id) }}" class="btn btn-warning shadow-sm">
+                            <i class="bi bi-pencil-square"></i> Editar Usuario
+                        </a>
+                        <a href="{{ url_for('admin_usuarios.usuarios') }}" class="btn btn-outline-secondary shadow-sm">
+                            <i class="bi bi-arrow-left"></i> Volver al listado
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha: Información adicional -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-lg h-100">
+                <div class="card-header bg-gradient bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información Adicional</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Aquí puedes agregar más información relevante del usuario en el futuro.</p>
+                    <div class="alert alert-light border-start border-4 border-info shadow-sm">
+                        <i class="bi bi-lightbulb text-info"></i>
+                        <strong> Sugerencia:</strong> Este espacio puede ser utilizado para mostrar estadísticas de pedidos,
+                        historial de actividades u otra información relevante.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

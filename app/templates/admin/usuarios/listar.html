@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Usuarios - Restaurante{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Cabecera con título y botón crear -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold text-primary">
+            <i class="bi bi-people-fill"></i> Gestión de Usuarios
+        </h1>
+        <a href="{{ url_for('admin_usuarios.crear') }}" class="btn btn-success shadow-sm">
+            <i class="bi bi-person-plus"></i> Nuevo Usuario
+        </a>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Buscar</label>
+                    <input type="text" class="form-control" name="q" value="{{ busqueda or '' }}"
+                           placeholder="Usuario, email, nombre...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Rol</label>
+                    <select name="role" class="form-select">
+                        <option value="">Todos</option>
+                        {% for rol in roles %}
+                        <option value="{{ rol }}" {{ 'selected' if request.args.role == rol }}>
+                            {{ rol|capitalize }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Estado</label>
+                    <select name="activo" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="True" {{ 'selected' if request.args.activo == 'True' }}>Activos</option>
+                        <option value="False" {{ 'selected' if request.args.activo == 'False' }}>Inactivos</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                        <i class="bi bi-search"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de usuarios -->
+    <div class="card border-0 shadow-lg">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light border-bottom border-2">
+                        <tr class="text-primary">
+                            <th scope="col">ID</th>
+                            <th scope="col">Usuario</th>
+                            <th scope="col">Nombre Completo</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Rol</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Registro</th>
+                            <th scope="col" class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr class="{% if usuario.id == current_user.id %}table-info{% endif %}">
+                            <td><strong>#{{ usuario.id }}</strong></td>
+                            <td>@{{ usuario.username }}</td>
+                            <td>{{ usuario.nombre_completo }}</td>
+                            <td>{{ usuario.email }}</td>
+                            <td>
+                                <span class="badge rounded-pill bg-{{ 'danger' if usuario.role == 'admin' else 'info' }}">
+                                    {{ usuario.role|upper }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if usuario.activo %}
+                                <span class="badge rounded-pill bg-success">Activo</span>
+                                {% else %}
+                                <span class="badge rounded-pill bg-secondary">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ usuario.fecha_registro.strftime('%d/%m/%Y') }}</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ url_for('admin_usuarios.ver', id=usuario.id) }}"
+                                       class="btn btn-outline-primary" title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('admin_usuarios.editar', id=usuario.id) }}"
+                                       class="btn btn-outline-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% if usuario.id != current_user.id %}
+                                        {% set accion = 'Activar' if not usuario.activo else 'Desactivar' %}
+                                        {% set mensaje = '¿' + accion + ' a ' + usuario.nombre_completo + '?' %}
+                                        <a href="{{ url_for('admin_usuarios.toggle_activo', id=usuario.id) }}"
+                                           class="btn btn-outline-{{ 'success' if not usuario.activo else 'secondary' }}"
+                                           title="{{ accion }}"
+                                           onclick="return confirm('{{ mensaje }}')">
+                                            <i class="bi bi-{{ 'play' if not usuario.activo else 'pause' }}-circle"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="bi bi-inbox display-4 d-block text-muted"></i>
+                                <p class="mt-3 text-muted">No se encontraron usuarios</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
