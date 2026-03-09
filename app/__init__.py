@@ -18,13 +18,19 @@ def create_app(config_class=Config):
     
     # Importar modelos (para migraciones)
     from .models import user
+    from .models import categoria
+    from .models import producto
     
     from .routes.auth import auth_bp                    # De auth.py
     from .routes.admin import admin_dashboard_bp        # De admin.py 
+    from .routes.categorias import categorias_bp        # De categoria.py
+    from .routes.productos import productos_bp
     
     # Registrar blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_dashboard_bp)          # Registrar el blueprint admin
+    app.register_blueprint(categorias_bp)               # Registrar el blueprint categoria
+    app.register_blueprint(productos_bp)
     
     return app
 

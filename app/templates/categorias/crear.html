@@ -1,0 +1,79 @@
+<div class="modal-header">
+
+<h5 class="modal-title">
+<i class="bi bi-plus-circle text-primary"></i>
+Nueva Categoría
+</h5>
+
+<button class="btn-close" data-bs-dismiss="modal"></button>
+
+</div>
+
+
+<form method="POST"
+action="{{ url_for('categorias.crear') }}">
+
+<div class="modal-body">
+
+<div class="mb-3">
+
+<label class="form-label fw-semibold">
+Nombre
+</label>
+
+<input type="text"
+name="nombre"
+class="form-control"
+required>
+
+</div>
+
+
+<div class="mb-3">
+
+<label class="form-label fw-semibold">
+Descripción
+</label>
+
+<textarea name="descripcion"
+class="form-control"
+rows="3"></textarea>
+
+</div>
+
+
+<div class="form-check">
+
+<input class="form-check-input"
+type="checkbox"
+name="activo"
+checked>
+
+<label class="form-check-label">
+Categoría activa
+</label>
+
+</div>
+
+</div>
+
+
+<div class="modal-footer">
+
+<button class="btn btn-outline-secondary"
+data-bs-dismiss="modal">
+
+Cancelar
+
+</button>
+
+<button class="btn btn-primary">
+
+<i class="bi bi-save"></i>
+Guardar
+
+</button>
+
+</div>
+
+</form>

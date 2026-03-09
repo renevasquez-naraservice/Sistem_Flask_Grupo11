@@ -1,0 +1,80 @@
+<div class="modal-header">
+
+<h5 class="modal-title">
+<i class="bi bi-pencil text-warning"></i>
+Editar Categoría
+</h5>
+
+<button class="btn-close" data-bs-dismiss="modal"></button>
+
+</div>
+
+
+<form method="POST"
+action="{{ url_for('categorias.editar', id=categoria.id) }}">
+
+<div class="modal-body">
+
+<div class="mb-3">
+
+<label class="form-label fw-semibold">
+Nombre
+</label>
+
+<input type="text"
+name="nombre"
+class="form-control"
+value="{{ categoria.nombre }}"
+required>
+
+</div>
+
+
+<div class="mb-3">
+
+<label class="form-label fw-semibold">
+Descripción
+</label>
+
+<textarea name="descripcion"
+class="form-control"
+rows="3">{{ categoria.descripcion }}</textarea>
+
+</div>
+
+
+<div class="form-check">
+
+<input class="form-check-input"
+type="checkbox"
+name="activo"
+{% if categoria.activo %}checked{% endif %}>
+
+<label class="form-check-label">
+Categoría activa
+</label>
+
+</div>
+
+</div>
+
+
+<div class="modal-footer">
+
+<button class="btn btn-outline-secondary"
+data-bs-dismiss="modal">
+
+Cancelar
+
+</button>
+
+<button class="btn btn-warning">
+
+<i class="bi bi-check-circle"></i>
+Actualizar
+
+</button>
+
+</div>
+
+</form>
