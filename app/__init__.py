@@ -20,12 +20,15 @@ def create_app(config_class=Config):
     from .models import user
     from .models import categoria
     from .models import producto
+    from .models import pedido
+    from .models import etiqueta    
     
     from .routes.auth import auth_bp                    # De auth.py
     from .routes.admin import admin_dashboard_bp        # De admin.py 
     from .routes.categorias import categorias_bp        # De categoria.py
     from .routes.productos import productos_bp
     from .routes.admin_usuarios import admin_usuarios_bp        # De admin_usuarios.py
+    from .routes.pedidos import pedidos_bp        # De pedidos.py
     
     # Registrar blueprints
     app.register_blueprint(auth_bp)
@@ -33,6 +36,7 @@ def create_app(config_class=Config):
     app.register_blueprint(categorias_bp)               # Registrar el blueprint categoria
     app.register_blueprint(productos_bp)
     app.register_blueprint(admin_usuarios_bp)         # Registrar el blueprint de usuarios
+    app.register_blueprint(pedidos_bp)         # Registrar el blueprint de pedidos
     
     return app
 

@@ -24,6 +24,9 @@ class User(db.Model, UserMixin):
     ultimo_acceso = db.Column(db.DateTime)
     
    
+    # Relaciones
+    pedidos = db.relationship('Pedido', back_populates='usuario', lazy='dynamic')
+    
     def set_password(self, password):
         """Establecer contraseña hasheada"""
         self.password_hash = generate_password_hash(password)
