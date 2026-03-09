@@ -14,3 +14,9 @@ class Etiqueta(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(50), unique=True, nullable=False)
     color = db.Column(db.String(20), default='primary') 
+    
+    productos = db.relationship('Producto', secondary=producto_etiqueta,
+                               back_populates='etiquetas', lazy='dynamic')
+    
+    def __repr__(self):
+        return f'<Etiqueta {self.nombre}>'
