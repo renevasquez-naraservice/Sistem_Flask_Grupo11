@@ -1,25 +1,34 @@
-from ..extensions import db
-from datetime import datetime
+from flask import Blueprint, render_template
+from flask_login import login_required, current_user
+from ..models.pedido import Pedido
 
-class Pedido(db.Model):
-    __tablename__ = "pedidos"
+pedidos_bp = Blueprint(
+    "pedidos",
+    __name__,
+    url_prefix="/pedidos"
+)
 
-    id = db.Column(db.Integer, primary_key=True)
-    fecha = db.Column(db.DateTime, default=datetime.utcnow)
-    estado = db.Column(db.String(20), default="pendiente")
-    total = db.Column(db.Float, default=0)
-    notas = db.Column(db.Text)
+@pedidos_bp.route("/")
+@login_required
+def lista():
+    pedidos = Pedido.query.filter_by(id_usuario=current_user.id).all()
 
-    id_usuario = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    return render_template(
+        "pedidos/lista.html",
+        pedidos=pedidos
+    )
 
-    usuario = db.relationship("User", back_populates="pedidos")
-    
-    @property
-    def total_formateado(self):
-        return f"${self.total:,.2f}"
+@pedidos_bp.route("/<int:id>")
+@login_required
+def ver(id):
+    pedido = Pedido.query.get_or_404(id)
 
-    def __repr__(self):
-        return f"<Pedido {self.id}>"
-    
+    if pedido.id_usuario != current_user.id:
+        return "No autorizado", 403
+
+    return render_template(
+        "pedidos/ver.html",
+        pedido=pedido
+    )
     
     
