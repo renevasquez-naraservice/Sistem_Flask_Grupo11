@@ -1,192 +1,354 @@
 {% extends "base.html" %}
 
-{% block title %}Categorías{% endblock %}
+{% block title %}Gestión de Categorías{% endblock %}
 
 {% block content %}
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #003da5 100%);
+    }
 
-<div class="container-fluid py-4">
+    .fade-in { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+    /* --- ESTILOS DEL MODAL --- */
+    #modalCategorias .modal-content {
+        border-radius: 24px !important;
+        border: none !important;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
+        overflow: hidden;
+    }
 
-<div>
-<h1 class="h3 mb-0">
-<i class="bi bi-tags text-primary"></i>
-Gestión de Categorías
-</h1>
+    .btn-glow-warning { color: #ffc107; transition: all 0.3s; border: 1px solid transparent; }
+    .btn-glow-warning:hover { background: #fffdf5; box-shadow: 0 0 15px rgba(255, 193, 7, 0.2); color: #d39e00; }
+    .btn-glow-danger { color: #dc3545; transition: all 0.3s; border: 1px solid transparent; }
+    .btn-glow-danger:hover { background: #fff5f5; box-shadow: 0 0 15px rgba(220, 53, 69, 0.2); }
 
-<p class="text-muted">Administrar categorías del sistema</p>
+    .stat-card {
+        border: none;
+        border-radius: 20px;
+        background: white;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+    }
+    .icon-shape {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 1.2rem;
+    }
+    .bg-soft-primary { background: #e7f1ff; color: #0d6efd; }
+    .bg-soft-success { background: #e9f7ef; color: #198754; }
+    .bg-soft-danger { background: #fdf2f2; color: #dc3545; }
+    .bg-soft-warning { background: #fff9e6; color: #f1c40f; }
+
+    .table-container {
+        border-radius: 24px;
+        background: white;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+
+    .cat-row { cursor: pointer; transition: all 0.2s; border-bottom: 1px solid #f1f3f5; }
+    .cat-row:hover { background-color: #f8faff !important; }
+    
+    .details-row {
+        background-color: #fdfdfe;
+        display: none;
+    }
+    .details-container {
+        padding: 20px 40px;
+        border-left: 4px solid #0d6efd;
+        animation: slideDown 0.3s ease-out;
+    }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .sortable { cursor: pointer; position: relative; }
+    .sortable:hover { color: #0d6efd !important; }
+
+    .badge-status { padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.7rem; }
+    
+    @media (max-width: 768px) {
+        .table-responsive-stack tr { display: block; margin-bottom: 1rem; border: 1px solid #eee; border-radius: 15px; }
+        .table-responsive-stack td { display: flex; justify-content: space-between; text-align: right; }
+        .table-responsive-stack td::before { content: attr(data-label); font-weight: bold; text-align: left; }
+        .details-container { padding: 15px; border-left: 10px solid #0d6efd; }
+    }
+</style>
+
+<div class="container-fluid py-4 fade-in">
+    <div class="row align-items-center mb-4 g-3">
+        <div class="col-md-6">
+            <h1 class="h2 fw-bold mb-0 text-dark">
+                <i class="bi bi-tags-fill text-primary me-2"></i>Categorías
+            </h1>
+            <p class="text-muted mb-0">Gestión centralizada de tu catálogo.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <button type="button" 
+                    data-url="{{ url_for('categorias.crear') }}" 
+                    onclick="forzarAperturaModal(this)"
+                    class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm abrir-modal">
+                <i class="bi bi-plus-circle-fill me-2"></i>Nueva Categoría
+            </button>
+        </div>
+    </div>
+
+    <div class="row mb-4 g-3">
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <div class="icon-shape bg-soft-primary me-3">
+                        <i class="bi bi-grid-3x3-gap-fill"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted small fw-bold mb-0 text-uppercase">Total</p>
+                        <h5 class="fw-bold mb-0">{{ categorias|length }}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body p-3 d-flex align-items-center">
+                    {% set activas = categorias|selectattr('activo', 'equalto', True)|list|length %}
+                    <div class="icon-shape bg-soft-success me-3">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted small fw-bold mb-0 text-uppercase">Activas</p>
+                        <h5 class="fw-bold mb-0">{{ activas }}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body p-3 d-flex align-items-center">
+                    {% set inactivas = categorias|selectattr('activo', 'equalto', False)|list|length %}
+                    <div class="icon-shape bg-soft-danger me-3">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted small fw-bold mb-0 text-uppercase">Inactivas</p>
+                        <h5 class="fw-bold mb-0">{{ inactivas }}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card shadow-sm">
+                <div class="card-body p-3 d-flex align-items-center">
+                    {% set total_prod = categorias|map(attribute='productos')|map('length')|sum %}
+                    <div class="icon-shape bg-soft-warning me-3">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted small fw-bold mb-0 text-uppercase">Items</p>
+                        <h5 class="fw-bold mb-0">{{ total_prod }}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-5">
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                <input type="text" id="tableSearch" class="form-control rounded-pill ps-5 border-2" style="height: 48px;" placeholder="Buscar categoría...">
+            </div>
+        </div>
+    </div>
+
+    <div class="card table-container border-0">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 table-responsive-stack" id="catTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="px-4 py-3 sortable" onclick="sortTable(0)">Nombre <i class="bi bi-arrow-down-up ms-1 small"></i></th>
+                        <th class="py-3 sortable" onclick="sortTable(1)">Productos <i class="bi bi-arrow-down-up ms-1 small"></i></th>
+                        <th class="py-3 text-center sortable" onclick="sortTable(2)">Estado <i class="bi bi-arrow-down-up ms-1 small"></i></th>
+                        <th class="py-3 text-end px-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in categorias %}
+                    <tr class="cat-row" onclick="toggleDetails('details-{{ cat.id }}')">
+                        <td class="px-4" data-label="Nombre">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-3 bg-light rounded-circle d-flex align-items-center justify-content-center" style="min-width: 40px; height: 40px;">
+                                    <i class="bi bi-folder2 text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark cat-name">{{ cat.nombre }}</div>
+                                    <small class="text-muted d-none d-md-block">{{ cat.descripcion or 'Sin descripción' }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Cant.">
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3">
+                                {{ cat.productos|length }} ítems
+                            </span>
+                        </td>
+                        <td class="text-center" data-label="Estado">
+                            {% if cat.activo %}
+                                <span class="badge-status bg-success-subtle text-success border border-success">ACTIVA</span>
+                            {% else %}
+                                <span class="badge-status bg-danger-subtle text-danger border border-danger">INACTIVA</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end px-4" onclick="event.stopPropagation();">
+                            <div class="btn-group">
+                                <button type="button" 
+                                        data-url="{{ url_for('categorias.editar', id=cat.id) }}" 
+                                        onclick="forzarAperturaModal(this)"
+                                        class="btn btn-sm btn-outline-warning border-0 abrir-modal">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <a href="{{ url_for('categorias.eliminar', id=cat.id) }}" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('¿Eliminar {{ cat.nombre }}?')">
+                                    <i class="bi bi-trash3"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr id="details-{{ cat.id }}" class="details-row">
+                        <td colspan="4" class="p-0">
+                            <div class="details-container">
+                                <div class="row">
+                                    <div class="col-md-4 border-end">
+                                        <h6 class="fw-bold text-primary mb-3">Descripción Completa</h6>
+                                        <p class="text-muted small">{{ cat.descripcion or 'No hay una descripción detallada para esta categoría.' }}</p>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <h6 class="fw-bold text-dark mb-3">Productos vinculados ({{ cat.productos|length }})</h6>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            {% for p in cat.productos %}
+                                                <span class="badge bg-white text-dark border p-2 fw-normal">
+                                                    <i class="bi bi-box me-1 text-muted"></i> {{ p.nombre }} 
+                                                    <small class="text-primary fw-bold ms-1">({{ p.stock }} un.)</small>
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted small italic">Esta categoría está vacía actualmente.</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
-<a href="{{ url_for('categorias.crear') }}"
-   class="btn btn-primary abrir-modal">
-
-<i class="bi bi-plus-circle"></i>
-Nueva Categoría
-
-</a>
-
+<div class="modal fade" id="modalCategorias" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" id="modalContenido">
+            </div>
+    </div>
 </div>
-
-<div class="card shadow-sm border-0">
-
-<div class="card-header bg-white">
-
-<h6 class="mb-0 fw-bold">
-<i class="bi bi-list"></i>
-Lista de Categorías
-</h6>
-
-</div>
-
-<div class="card-body">
-
-{% if categorias %}
-
-<div class="table-responsive">
-
-<table class="table table-hover align-middle">
-
-<thead class="table-light">
-
-<tr>
-<th>ID</th>
-<th>Nombre</th>
-<th>Descripción</th>
-<th>Estado</th>
-<th class="text-end">Acciones</th>
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for categoria in categorias %}
-
-<tr>
-
-<td>{{ categoria.id }}</td>
-
-<td class="fw-semibold">
-{{ categoria.nombre }}
-</td>
-
-<td class="text-muted">
-{{ categoria.descripcion }}
-</td>
-
-<td>
-
-{% if categoria.activo %}
-
-<span class="badge bg-success">
-Activa
-</span>
-
-{% else %}
-
-<span class="badge bg-danger">
-Inactiva
-</span>
-
-{% endif %}
-
-</td>
-
-<td class="text-end">
-
-<a href="{{ url_for('categorias.editar', id=categoria.id) }}"
-   class="btn btn-sm btn-outline-primary abrir-modal">
-
-<i class="bi bi-pencil"></i>
-
-</a>
-
-<a href="{{ url_for('categorias.eliminar', id=categoria.id) }}"
-   class="btn btn-sm btn-outline-danger"
-   onclick="return confirm('¿Eliminar categoría?')">
-
-<i class="bi bi-trash"></i>
-
-</a>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
-
-{% else %}
-
-<div class="text-center py-5 text-muted">
-
-<i class="bi bi-inbox" style="font-size:3rem"></i>
-
-<p class="mt-3">
-No hay categorías registradas
-</p>
-
-</div>
-
-{% endif %}
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- MODAL -->
-
-<div class="modal fade" id="modalCategorias">
-
-<div class="modal-dialog">
-
-<div class="modal-content" id="modalContenido">
-
-</div>
-
-</div>
-
-</div>
-
 
 <script>
+    function toggleDetails(id) {
+        const detailRow = document.getElementById(id);
+        const isVisible = detailRow.style.display === "table-row";
+        document.querySelectorAll('.details-row').forEach(row => row.style.display = 'none');
+        detailRow.style.display = isVisible ? "none" : "table-row";
+    }
 
-document.addEventListener("click", function(e){
+    function sortTable(n) {
+        let table = document.getElementById("catTable");
+        let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        switching = true; dir = "asc";
+        while (switching) {
+            switching = false;
+            rows = table.querySelectorAll(".cat-row");
+            for (i = 0; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                if (dir == "asc") {
+                    if (x.textContent.toLowerCase() > y.textContent.toLowerCase()) { shouldSwitch = true; break; }
+                } else if (dir == "desc") {
+                    if (x.textContent.toLowerCase() < y.textContent.toLowerCase()) { shouldSwitch = true; break; }
+                }
+            }
+            if (shouldSwitch) {
+                let nextDetail = rows[i+1].nextElementSibling;
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                rows[i].parentNode.insertBefore(nextDetail, rows[i].nextElementSibling);
+                switching = true;
+                switchcount ++;
+            } else {
+                if (switchcount == 0 && dir == "asc") { dir = "desc"; switching = true; }
+            }
+        }
+    }
 
-if(e.target.closest(".abrir-modal")){
+    document.getElementById('tableSearch').addEventListener('keyup', function() {
+        let val = this.value.toLowerCase();
+        document.querySelectorAll('.cat-row').forEach(row => {
+            let name = row.querySelector('.cat-name').innerText.toLowerCase();
+            let details = row.nextElementSibling;
+            if(name.includes(val)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+                details.style.display = 'none';
+            }
+        });
+    });
 
-e.preventDefault()
+function forzarAperturaModal(elemento) {
+    const url = elemento.getAttribute("data-url");
+    const modalContent = document.getElementById("modalContenido");
+    const modalElement = document.getElementById("modalCategorias");
+    
+    if (!url || !modalContent || !modalElement) {
+        console.error("Faltan elementos: URL o Modal no encontrados");
+        return;
+    }
 
-let url = e.target.closest(".abrir-modal").getAttribute("href")
+    // Spinner dinámico según la acción
+    const color = url.includes('crear') ? 'text-primary' : 'text-warning';
 
-fetch(url)
+    modalContent.innerHTML = `
+        <div class="modal-body p-5 text-center">
+            <div class="spinner-border ${color}" role="status"></div>
+            <p class="mt-3 text-muted fw-bold">Cargando...</p>
+        </div>`;
+    
+    const modalInstancia = new bootstrap.Modal(modalElement);
+    modalInstancia.show();
 
-.then(res => res.text())
-
-.then(html => {
-
-document.getElementById("modalContenido").innerHTML = html
-
-let modal = new bootstrap.Modal(
-document.getElementById("modalCategorias")
-)
-
-modal.show()
-
-})
-
+    fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.text())
+    .then(html => {
+        modalContent.innerHTML = html;
+        const scripts = modalContent.querySelectorAll("script");
+        scripts.forEach(oldScript => {
+            const newScript = document.createElement("script");
+            newScript.text = oldScript.text;
+            document.body.appendChild(newScript).parentNode.removeChild(newScript);
+        });
+    })
+    .catch(err => {
+        modalContent.innerHTML = `<div class="p-5 text-center text-danger">Error: ${err.message}</div>`;
+    });
 }
-
-})
-
 </script>
-
 {% endblock %}
