@@ -1,79 +1,153 @@
-<div class="modal-header">
-
-<h5 class="modal-title">
-<i class="bi bi-plus-circle text-primary"></i>
-Nueva Categoría
-</h5>
-
-<button class="btn-close" data-bs-dismiss="modal"></button>
-
+<div class="modal-header border-0 pb-0" style="background: linear-gradient(to right, #f8faff, #ffffff);">
+    <div class="d-flex align-items-center p-2">
+        <div class="icon-shape shadow-sm bg-white text-primary rounded-4 me-3 d-flex align-items-center justify-content-center border" style="width: 50px; height: 50px;">
+            <i class="bi bi-plus-square-dotted fs-3"></i>
+        </div>
+        
+        <div class="d-flex flex-column">
+            <div class="d-flex align-items-center mb-1">
+                <h5 class="modal-title fw-bold text-dark mb-0" style="letter-spacing: -0.8px; font-size: 1.25rem;">
+                    Nueva Categoría
+                </h5>
+                <span class="badge ms-2 px-2 py-1" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd; font-size: 0.65rem; border: 1px solid rgba(13, 110, 253, 0.2); border-radius: 6px; letter-spacing: 0.5px; font-weight: 700;">
+                    NUEVA
+                </span>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="d-inline-block bg-primary rounded-circle me-2" style="width: 6px; height: 6px; opacity: 0.6;"></span>
+                <p class="text-muted mb-0" style="font-size: 0.8rem; font-weight: 400;">
+                    Organiza tu catálogo con etiquetas claras
+                </p>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn-close me-2" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 
+<form method="POST" action="{{ url_for('categorias.crear') }}">
+    <div class="modal-body p-4">
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-uppercase text-secondary mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">
+                Nombre de la Categoría
+            </label>
+            <div class="input-group input-custom-group border rounded-3 overflow-hidden">
+                <span class="input-group-text bg-light border-0 text-primary opacity-75">
+                    <i class="bi bi-tag-fill"></i>
+                </span>
+                <input type="text" name="nombre" class="form-control border-0 ps-2 fw-semibold shadow-none bg-light" 
+                       placeholder="Ej: Bebidas Frías" required autofocus>
+            </div>
+        </div>
 
-<form method="POST"
-action="{{ url_for('categorias.crear') }}">
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-uppercase text-secondary mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">
+                Descripción (Opcional)
+            </label>
+            <textarea name="descripcion" class="form-control border-0 bg-light shadow-none p-3" rows="3" 
+                      placeholder="Describe qué productos pertenecen aquí..." style="border-radius: 12px; resize: none;"></textarea>
+        </div>
 
-<div class="modal-body">
+        <div class="card border-0 rounded-4 mb-3 transition-all" id="createStatusCard" 
+            style="background: #ffffff; border: 1px solid rgba(0,0,0,0.05) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+            <div class="card-body d-flex align-items-center justify-content-between py-3 px-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3 transition-all" 
+                        id="createIconContainer"
+                        style="width: 42px; height: 42px; background: rgba(13, 110, 253, 0.08); border: 1px solid rgba(13, 110, 253, 0.1);">
+                        <i class="bi bi-eye-fill text-primary fs-5" id="createStatusIcon"></i>
+                    </div>
+                    
+                    <div>
+                        <p class="mb-0 fw-bolder text-dark small" id="createStatusTitle" style="letter-spacing: -0.3px;">
+                            Estado: Activo
+                        </p>
+                        <small class="text-muted fw-medium" id="createStatusText" style="font-size: 0.75rem; opacity: 0.8;">
+                            Visible para todos los clientes
+                        </small>
+                    </div>
+                </div>
 
-<div class="mb-3">
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input cursor-pointer custom-switch" type="checkbox" name="activo" 
+                        id="createActivoSwitch" checked 
+                        style="width: 2.8rem; height: 1.5rem; filter: drop-shadow(0 2px 4px rgba(13, 110, 253, 0.2));">
+                </div>
+            </div>
+        </div>
 
-<label class="form-label fw-semibold">
-Nombre
-</label>
+        <div class="d-flex align-items-center p-3 rounded-4" style="background-color: #eef2ff;">
+            <i class="bi bi-lightning-charge-fill text-primary me-3 fs-5"></i>
+            <p class="mb-0 text-primary small fw-medium" style="line-height: 1.2;">
+                Podrás vincular productos a esta categoría inmediatamente después de guardarla
+            </p>
+        </div>
+    </div>
 
-<input type="text"
-name="nombre"
-class="form-control"
-required>
-
-</div>
-
-
-<div class="mb-3">
-
-<label class="form-label fw-semibold">
-Descripción
-</label>
-
-<textarea name="descripcion"
-class="form-control"
-rows="3"></textarea>
-
-</div>
-
-
-<div class="form-check">
-
-<input class="form-check-input"
-type="checkbox"
-name="activo"
-checked>
-
-<label class="form-check-label">
-Categoría activa
-</label>
-
-</div>
-
-</div>
-
-
-<div class="modal-footer">
-
-<button class="btn btn-outline-secondary"
-data-bs-dismiss="modal">
-
-Cancelar
-
-</button>
-
-<button class="btn btn-primary">
-
-<i class="bi bi-save"></i>
-Guardar
-
-</button>
-
-</div>
-
+    <div class="modal-footer border-0 p-4 pt-2">
+        <button type="button" class="btn btn-outline-danger border-0 rounded-pill fw-bold px-4 me-auto btn-glow-danger" data-bs-dismiss="modal">
+            Descartar
+        </button>
+        <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm btn-glow-primary">
+            <i class="bi bi-plus-circle me-1"></i> Guardar Categoría
+        </button>
+    </div>
 </form>
+
+<style>
+    .modal-content { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 20px; }
+    .input-custom-group { transition: all 0.2s; border: 1px solid #eee !important; }
+    .input-custom-group:focus-within { border-color: #0d6efd !important; box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1) !important; }
+    .custom-switch { width: 3em !important; height: 1.6em !important; cursor: pointer; }
+    .btn-glow-primary { background-color: #0d6efd; color: white; transition: all 0.3s ease; }
+    .btn-glow-primary:hover { background-color: #0b5ed7; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4) !important; transform: translateY(-1px); }
+    .btn-glow-danger:hover { background-color: #fff5f5; color: #dc3545 !important; transform: translateY(-1px); }
+    .transition-all { transition: all 0.3s ease; }
+    .inactive-bg { background-color: #fcfcfc !important; opacity: 0.7; }
+
+    /* Efecto de hover sutil para la tarjeta */
+    #createStatusCard:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.05) !important;
+        border-color: rgba(13, 110, 253, 0.2) !important;
+    }
+    
+    /* Clase para cuando el estado es inactivo (vía JS) */
+    .status-inactive-bg {
+        background: #fcfcfc !important;
+        opacity: 0.8;
+        border-color: #eee !important;
+    }
+    
+    .status-inactive-icon {
+        background: #f8f9fa !important;
+        border-color: #ddd !important;
+        color: #6c757d !important;
+    }
+</style>
+
+<script>
+    (function() {
+        const sw = document.getElementById('createActivoSwitch');
+        if(sw) {
+            sw.addEventListener('change', function() {
+                const text = document.getElementById('createStatusText');
+                const title = document.getElementById('createStatusTitle');
+                const icon = document.getElementById('createStatusIcon');
+                const card = document.getElementById('createStatusCard');
+                if(this.checked) {
+                    title.innerText = "Estado: Activo";
+                    text.innerText = "Visible para todos los clientes";
+                    icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill');
+                    icon.classList.replace('text-muted', 'text-primary');
+                    card.classList.remove('inactive-bg');
+                } else {
+                    title.innerText = "Estado: Borrador";
+                    text.innerText = "Oculto en la tienda por ahora";
+                    icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill');
+                    icon.classList.replace('text-primary', 'text-muted');
+                    card.classList.add('inactive-bg');
+                }
+            });
+        }
+    })();
+</script>
