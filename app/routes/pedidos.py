@@ -12,7 +12,7 @@ pedidos_bp = Blueprint(
 @pedidos_bp.route("/")
 @login_required
 def lista():
-    pedidos = Pedido.query.filter_by(id_usuario=current_user.id).all()
+    pedidos = Pedido.query.order_by.all(Pedido.fecha.desc())
     return render_template("pedidos/lista.html", pedidos=pedidos)
 
 
