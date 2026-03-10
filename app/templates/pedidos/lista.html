@@ -1,9 +1,62 @@
 {% extends "base.html" %}
+
+{% block title %}Lista de pedidos - Plantilla Flask{% endblock %}
+
 {% block content %}
-
 <div class="container py-4">
-    <h2>Lista de Pedidos</h2>
-    <p>Página funcionando correctamente.</p>
-</div>
+    <h1 class="fw-bold mb-3">Pedidos</h1>
 
+    <div class="mb-3">
+        <a href="{{ url_for('pedidos.crear') }}" class="btn btn-primary">
+            Agregar Pedido
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle bg-white">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                    <th>Usuario</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if pedidos %}
+                    {% for pedido in pedidos %}
+                    <tr>
+                        <td>{{ pedido.id }}</td>
+                        <td>{{ pedido.fecha.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ pedido.estado }}</td>
+                        <td>{{ pedido.total_formateado }}</td>
+                        <td>{{ pedido.id_usuario }}</td>
+                        <td>
+                            <a href="{{ url_for('pedidos.ver', id=pedido.id) }}" class="btn btn-sm btn-info text-white">
+                                Ver
+                            </a>
+                            <a href="{{ url_for('pedidos.editar', id=pedido.id) }}" class="btn btn-sm btn-warning text-dark">
+                                Editar
+                            </a>
+                            <form action="{{ url_for('pedidos.eliminar', id=pedido.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este pedido?')">
+                                    Eliminar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            No hay pedidos registrados.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}
