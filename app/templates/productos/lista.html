@@ -1,203 +1,437 @@
 {% extends "base.html" %}
 
+{% block title %}Inventario de Productos{% endblock %}
+
 {% block content %}
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #003da5 100%);
+    }
 
-<div class="container mt-4">
+    .card-product {
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        border: none;
+        border-radius: 20px;
+        background: var(--glass-bg);
+        overflow: hidden;
+    }
 
-<h2>Productos</h2>
+    .card-product:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+    }
 
-<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#crearProducto">
-Agregar Producto
-</button>
+    .img-container {
+        position: relative;
+        height: 220px;
+        overflow: hidden;
+        background: #f1f3f5;
+    }
 
-<table class="table table-bordered">
+    .img-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+    }
 
-<thead>
-<tr>
-<th>ID</th>
-<th>Nombre</th>
-<th>Categoria</th>
-<th>Precio</th>
-<th>Stock</th>
-<th>Estado</th>
-<th>Acciones</th>
-</tr>
-</thead>
+    .card-product:hover .img-container img {
+        transform: scale(1.08);
+    }
 
-<tbody>
+    .status-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 2;
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
 
-{% for producto in productos %}
+    .price-tag {
+        font-size: 1.4rem;
+        font-weight: 800;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
 
-<tr>
+    .category-label {
+        font-size: 0.75rem;
+        letter-spacing: 1.2px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: #e9ecef;
+        color: #495057;
+        font-weight: 700;
+    }
 
-<td>{{ producto.id }}</td>
-<td>{{ producto.nombre }}</td>
-<td>{{ producto.categoria.nombre }}</td>
-<td>{{ producto.precio }}</td>
-<td>{{ producto.stock }}</td>
+    .search-box {
+        border-radius: 50px;
+        padding-left: 20px;
+        border: 2px solid #eee;
+        transition: all 0.3s;
+    }
 
-<td>
-{% if producto.activo %}
-<span class="badge bg-success">Activo</span>
-{% else %}
-<span class="badge bg-danger">Inactivo</span>
-{% endif %}
-</td>
+    .search-box:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    }
 
-<td>
+    .filter-select {
+        border-radius: 50px;
+        border: 2px solid #eee;
+        font-weight: 600;
+        color: #666;
+    }
 
-<button class="btn btn-warning btn-sm"
-data-bs-toggle="modal"
-data-bs-target="#editar{{ producto.id }}">
-Editar
-</button>
+    .image-preview {
+        width: 100%;
+        height: 150px;
+        border-radius: 12px;
+        border: 2px dashed #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 10px;
+        overflow: hidden;
+        background: #fafafa;
+    }
+    .image-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
 
-<a href="{{ url_for('productos.eliminar', id=producto.id) }}"
-class="btn btn-danger btn-sm">
-Eliminar
-</a>
+    .is-invalid-custom {
+        border-color: #dc3545 !important;
+    }
+    .feedback-msg {
+        font-size: 0.8rem;
+        margin-top: 4px;
+        font-weight: 600;
+    }
+</style>
 
-</td>
+<div class="container-fluid py-4">
+    <div class="row align-items-center mb-4 g-3">
+        <div class="col-xl-3 col-lg-4">
+            <h1 class="h2 fw-bold mb-0 text-dark">
+                <i class="bi bi-grid-3x3-gap-fill text-primary me-2"></i>Productos
+            </h1>
+            <p class="text-muted small mb-0">Gestiona tu inventario en tiempo real</p>
+        </div>
+        
+        <div class="col-xl-9 col-lg-8">
+            <div class="row g-2 justify-content-end">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 rounded-start-pill px-3">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" id="productSearch" class="form-control border-start-0 rounded-end-pill search-box" placeholder="Nombre o descripción...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select id="categoryFilter" class="form-select filter-select">
+                        <option value="all">Todas las Categorías</option>
+                        {% for cat in categorias %}
+                            {% if cat.activo %}
+                            <option value="{{ cat.nombre|lower }}">{{ cat.nombre }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="statusFilter" class="form-select filter-select">
+                        <option value="all">Estado: Todos</option>
+                        <option value="activo">Activos</option>
+                        <option value="inactivo">Inactivos</option>
+                    </select>
+                </div>
+                <div class="col-md-auto">
+                    <button class="btn btn-primary btn-lg rounded-pill shadow px-4" data-bs-toggle="modal" data-bs-target="#crearProducto">
+                        <i class="bi bi-plus-circle-fill me-2"></i>Añadir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-</tr>
+    <div class="row g-4" id="productGrid">
+        {% for producto in productos %}
+        <div class="col-12 col-md-6 col-lg-4 col-xl-3 product-item" 
+             data-categoria="{{ producto.categoria.nombre|lower }}" 
+             data-estado="{{ 'activo' if producto.activo else 'inactivo' }}">
+            
+            <div class="card card-product h-100 shadow-sm">
+                <div class="img-container">
+                    <span class="badge rounded-pill status-badge {% if producto.activo %}bg-success{% else %}bg-danger{% endif %} shadow-sm">
+                        <i class="bi bi-circle-fill me-1 small"></i>{{ 'Activo' if producto.activo else 'Inactivo' }}
+                    </span>
+                    
+                    {% set img_url = url_for('static', filename='uploads/' + producto.imagen) if producto.imagen and producto.imagen != '' else url_for('static', filename='uploads/default.png') %}
+                    <img src="{{ img_url }}" 
+                         alt="{{ producto.nombre }}"
+                         onerror="this.onerror=null; this.src='https://placehold.co/600x400?text=Sin+Imagen';">
+                </div>
 
-<!-- MODAL EDITAR -->
+                <div class="card-body d-flex flex-column p-4">
+                    <div class="mb-2">
+                        <span class="category-label text-uppercase">{{ producto.categoria.nombre }}</span>
+                    </div>
+                    
+                    <h5 class="card-title fw-bold text-dark mb-2 text-truncate-2" style="height: 3rem;">{{ producto.nombre }}</h5>
+                    
+                    <p class="card-text text-muted small mb-4">
+                        {{ producto.descripcion[:75] }}{% if producto.descripcion|length > 75 %}...{% endif %}
+                    </p>
 
-<div class="modal fade" id="editar{{ producto.id }}">
+                    <div class="d-flex justify-content-between align-items-end mt-auto">
+                        <div>
+                            <small class="text-muted d-block mb-0">Precio</small>
+                            <span class="price-tag">${{ "{:,.2f}".format(producto.precio) }}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge {% if producto.stock < 5 %}bg-danger-subtle text-danger{% else %}bg-light text-dark{% endif %} rounded-pill p-2">
+                                <i class="bi bi-box-fill me-1"></i>{{ producto.stock }} <small>uds</small>
+                            </span>
+                        </div>
+                    </div>
+                </div>
 
-<div class="modal-dialog">
+                <div class="card-footer bg-white border-0 p-4 pt-0 d-flex gap-2">
+                    <button class="btn btn-outline-warning btn-sm w-100 rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#editar{{ producto.id }}">
+                        <i class="bi bi-pencil-square"></i> Editar
+                    </button>
+                    <a href="{{ url_for('productos.eliminar', id=producto.id) }}" 
+                       class="btn btn-outline-danger btn-sm w-100 rounded-pill fw-bold" 
+                       onclick="return confirm('¿Eliminar definitivamente {{ producto.nombre }}?')">
+                        <i class="bi bi-trash-fill"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
 
-<div class="modal-content">
-
-<form method="POST" action="{{ url_for('productos.editar', id=producto.id) }}">
-
-<div class="modal-header">
-<h5 class="modal-title">Editar Producto</h5>
+        <div class="modal fade" id="editar{{ producto.id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 rounded-4 overflow-hidden">
+                    <form method="POST" action="{{ url_for('productos.editar', id=producto.id) }}" enctype="multipart/form-data">
+                        <div class="modal-header bg-warning py-3 border-0">
+                            <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square me-2"></i>Editar Producto</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="row g-4">
+                                <div class="col-md-5 text-center">
+                                    <label class="form-label fw-bold d-block">Imagen Actual</label>
+                                    <img src="{{ img_url }}" class="img-thumbnail mb-3 rounded-3" style="max-height: 200px;" onerror="this.src='https://placehold.co/400x400?text=No+Image';">
+                                    <div class="mt-2">
+                                        <label class="btn btn-outline-primary btn-sm rounded-pill w-100">
+                                            <i class="bi bi-camera-fill me-1"></i> Cambiar Foto
+                                            <input type="file" name="imagen_archivo" class="d-none" accept="image/*">
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label fw-bold small text-muted">Nombre</label>
+                                            <input type="text" name="nombre" class="form-control rounded-3" value="{{ producto.nombre }}" required>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-bold small text-muted">Categoría</label>
+                                            <select name="categoria" class="form-select rounded-3" required>
+                                                {% for cat in categorias %}
+                                                    {% if cat.activo or cat.id == producto.categoria_id %}
+                                                    <option value="{{ cat.id }}" {% if cat.id == producto.categoria_id %}selected{% endif %}>{{ cat.nombre }}</option>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label fw-bold small text-muted">Precio ($)</label>
+                                            <input type="number" step="0.01" name="precio" class="form-control rounded-3" value="{{ producto.precio }}" required min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label fw-bold small text-muted">Stock</label>
+                                            <input type="number" name="stock" class="form-control rounded-3" value="{{ producto.stock }}" required min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold small text-muted">Descripción</label>
+                                    <textarea name="descripcion" class="form-control rounded-3" rows="3">{{ producto.descripcion }}</textarea>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check form-switch card p-3 border-light shadow-sm">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="form-check-label fw-bold mb-0">Visible en tienda</label>
+                                            <input class="form-check-input" type="checkbox" name="activo" {% if producto.activo %}checked{% endif %}>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light border-0 p-4">
+                            <button type="button" class="btn btn-white rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 
-<div class="modal-body">
+<div class="modal fade" id="crearProducto" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <form method="POST" id="formCrearProducto" action="{{ url_for('productos.crear') }}" enctype="multipart/form-data">
+                <div class="modal-header bg-primary text-white py-3">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-box-fill me-2"></i>Nuevo Producto</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <div class="bg-light p-4 rounded-4 text-center border-dashed border-2" style="height: 100%;">
+                                <div class="image-preview" id="previewCreate">
+                                    <i class="bi bi-image-fill fs-1 text-muted opacity-25"></i>
+                                </div>
+                                <label class="d-block mt-3 fw-bold">Imagen del Producto</label>
+                                <input type="file" name="imagen_archivo" id="inputImageCreate" class="form-control form-control-sm mt-2" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Nombre</label>
+                                    <input type="text" name="nombre" id="inputNombreNuevo" list="nombresSugeridos" class="form-control" placeholder="Ej: Laptop Pro 15'" required autocomplete="off">
+                                    
+                                    <datalist id="nombresSugeridos">
+                                        {% for p in productos %}
+                                        <option value="{{ p.nombre }}">
+                                        {% endfor %}
+                                    </datalist>
 
-<input type="text" name="nombre" class="form-control mb-2"
-value="{{ producto.nombre }}" required>
-
-<textarea name="descripcion" class="form-control mb-2">
-{{ producto.descripcion }}
-</textarea>
-
-<input type="number" name="precio" class="form-control mb-2"
-value="{{ producto.precio }}" required>
-
-<input type="number" name="stock" class="form-control mb-2"
-value="{{ producto.stock }}" required>
-
-<select name="categoria" class="form-control mb-2">
-
-{% for categoria in categorias %}
-
-<option value="{{ categoria.id }}"
-{% if categoria.id == producto.id_categoria %}selected{% endif %}>
-
-{{ categoria.nombre }}
-
-</option>
-
-{% endfor %}
-
-</select>
-
-<label>
-<input type="checkbox" name="activo"
-{% if producto.activo %}checked{% endif %}>
-Activo
-</label>
-
+                                    <div id="nombreFeedback"></div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Categoría</label>
+                                    <select name="categoria" class="form-select" required>
+                                        <option value="" selected disabled>Seleccionar...</option>
+                                        {% for cat in categorias %}
+                                            {% if cat.activo %}
+                                            <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-bold">Precio ($)</label>
+                                    <input type="number" step="0.01" name="precio" class="form-control" required min="0">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-bold">Stock</label>
+                                    <input type="number" name="stock" class="form-control" required min="0">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Descripción</label>
+                                    <textarea name="descripcion" class="form-control" rows="3"></textarea>
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <div class="form-check form-switch bg-primary-subtle p-3 rounded-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="form-check-label fw-bold text-primary mb-0">Activar producto</label>
+                                            <input class="form-check-input" type="checkbox" name="activo" checked>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0 p-4">
+                    <button type="submit" id="btnGuardar" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow">Crear Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
-<div class="modal-footer">
+<script>
+    // --- FILTRADO DE BÚSQUEDA ---
+    const searchInput = document.getElementById('productSearch');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const products = document.querySelectorAll('.product-item');
 
-<button class="btn btn-success">Guardar</button>
+    function filterProducts() {
+        const textValue = searchInput.value.toLowerCase();
+        const categoryValue = categoryFilter.value;
+        const statusValue = statusFilter.value;
 
-</div>
+        products.forEach(item => {
+            const productText = item.innerText.toLowerCase();
+            const productCategory = item.getAttribute('data-categoria');
+            const productStatus = item.getAttribute('data-estado');
 
-</form>
+            const matchesText = productText.includes(textValue);
+            const matchesCategory = (categoryValue === 'all' || productCategory === categoryValue);
+            const matchesStatus = (statusValue === 'all' || productStatus === statusValue);
 
-</div>
+            item.style.display = (matchesText && matchesCategory && matchesStatus) ? '' : 'none';
+        });
+    }
 
-</div>
+    searchInput.addEventListener('keyup', filterProducts);
+    categoryFilter.addEventListener('change', filterProducts);
+    statusFilter.addEventListener('change', filterProducts);
 
-</div>
+    // --- VISTA PREVIA DE IMAGEN ---
+    document.getElementById('inputImageCreate').addEventListener('change', function(e) {
+        const preview = document.getElementById('previewCreate');
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                preview.innerHTML = `<img src="${event.target.result}" style="width:100%; height:100%; object-fit:contain;">`;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
 
-{% endfor %}
+    // --- AUTOCOMPLETADO Y VALIDACIÓN DE DUPLICADOS ---
+    const inputNombre = document.getElementById('inputNombreNuevo');
+    const feedback = document.getElementById('nombreFeedback');
+    const btnGuardar = document.getElementById('btnGuardar');
 
-</tbody>
+    // Obtenemos todos los nombres que ya existen en las cards para validar
+    const nombresExistentes = Array.from(document.querySelectorAll('.card-title')).map(el => el.innerText.trim().toLowerCase());
 
-</table>
+    inputNombre.addEventListener('input', function() {
+        const valor = this.value.trim().toLowerCase();
+        
+        if (valor === "") {
+            feedback.innerHTML = "";
+            this.classList.remove('is-invalid-custom');
+            btnGuardar.disabled = false;
+            return;
+        }
 
-</div>
-
-<!-- MODAL CREAR -->
-
-<div class="modal fade" id="crearProducto">
-
-<div class="modal-dialog">
-
-<div class="modal-content">
-
-<form method="POST" action="{{ url_for('productos.crear') }}">
-
-<div class="modal-header">
-<h5 class="modal-title">Nuevo Producto</h5>
-</div>
-
-<div class="modal-body">
-
-<input type="text" name="nombre" class="form-control mb-2"
-placeholder="Nombre" required>
-
-<textarea name="descripcion" class="form-control mb-2"
-placeholder="Descripción"></textarea>
-
-<input type="number" step="0.01" name="precio"
-class="form-control mb-2"
-placeholder="Precio" required>
-
-<input type="number" name="stock"
-class="form-control mb-2"
-placeholder="Stock" required>
-
-<select name="categoria" class="form-control mb-2">
-
-{% for categoria in categorias %}
-
-<option value="{{ categoria.id }}">
-{{ categoria.nombre }}
-</option>
-
-{% endfor %}
-
-</select>
-
-<label>
-<input type="checkbox" name="activo" checked>
-Activo
-</label>
-
-</div>
-
-<div class="modal-footer">
-
-<button class="btn btn-primary">
-Guardar
-</button>
-
-</div>
-
-</form>
-
-</div>
-
-</div>
-
-</div>
-
+        // Si el nombre exacto ya existe, mostramos error y bloqueamos
+        if (nombresExistentes.includes(valor)) {
+            feedback.innerHTML = `<div class="text-danger feedback-msg"><i class="bi bi-exclamation-triangle-fill"></i> Este producto ya existe en el inventario</div>`;
+            this.classList.add('is-invalid-custom');
+            btnGuardar.disabled = true;
+        } else {
+            feedback.innerHTML = `<div class="text-success feedback-msg"><i class="bi bi-check-circle-fill"></i> Nombre disponible</div>`;
+            this.classList.remove('is-invalid-custom');
+            btnGuardar.disabled = false;
+        }
+    });
+</script>
 {% endblock %}
