@@ -1,69 +1,127 @@
-{% extends "base.html" %}
+<div class="row justify-content-center">
+    <div class="col-12">
+        {% if pedido %}
+        <div class="modal-header border-0 p-4 pb-2">
+            <div class="d-flex align-items-center justify-content-between w-100">
+                <div class="d-flex align-items-center">
+                    <div class="icon-shape bg-primary-soft text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-receipt-cutoff fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold m-0 text-dark" style="letter-spacing: -0.02em;">Detalle del Pedido</h5>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2">
+                                ID: #{{ pedido.id }}
+                            </span>
+                            <small class="text-muted" style="font-size: 0.75rem;">
+                                <i class="bi bi-clock me-1"></i>Registro interno
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close shadow-none custom-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+        </div>
 
-{% block title %}Detalle del pedido - Plantilla Flask{% endblock %}
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="bg-primary p-3 text-white d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="small opacity-75 mb-0 text-uppercase fw-bold" style="font-size: 0.7rem;">Fecha de Emisión</p>
+                    <h6 class="mb-0"><i class="bi bi-calendar3 me-2"></i>{{ pedido.fecha.strftime('%d/%m/%Y') }}</h6>
+                </div>
+                <div class="text-end">
+                    {% set estado_class = 'bg-warning text-dark' if pedido.estado == 'Pendiente' 
+                                         else 'bg-light text-success' if pedido.estado == 'Entregado'
+                                         else 'bg-info text-white' %}
+                    <span class="badge {{ estado_class }} rounded-pill px-3 py-2 shadow-sm">
+                        {{ pedido.estado }}
+                    </span>
+                </div>
+            </div>
 
-{% block content %}
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            {% if pedido%}
-            <h1 class="fw-bold mb-4">Detalle del pedido</h1>
-
-            <div class="card shadow-sm">
-                <div class="card-body p-4">
-                    <div class="mb-3">
-                        <strong>ID:</strong> {{ pedido.id }}
+            <div class="card-body p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <h6 class="text-muted text-uppercase small fw-bolder mb-2">Cliente</h6>
+                        <div class="d-flex align-items-center p-2 bg-light rounded-3 border">
+                            <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                                <i class="bi bi-person text-primary"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <p class="mb-0 fw-bold small text-truncate">ID: {{ pedido.id_usuario }}</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <strong>Fecha:</strong> {{ pedido.fecha.strftime('%Y-%m-%d %H:%M') }}
+                    <div class="col-sm-6">
+                        <h6 class="text-muted text-uppercase small fw-bolder mb-2">Total</h6>
+                        <div class="p-2 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-3 text-center">
+                            <h4 class="text-primary fw-bold mb-0">{{ pedido.total_formateado }}</h4>
+                        </div>
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <strong>Estado:</strong> {{ pedido.estado }}
+                <div class="mb-4">
+                    <h6 class="text-muted text-uppercase small fw-bolder mb-2">Notas del Pedido</h6>
+                    <div class="p-3 border rounded-3 bg-light" style="min-height: 60px; border-style: dashed !important;">
+                        <p class="mb-0 text-dark small fst-italic">
+                            <i class="bi bi-chat-left-dots me-2 text-muted"></i>
+                            {{ pedido.notas if pedido.notas else 'Sin notas registradas.' }}
+                        </p>
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <strong>Total:</strong> {{ pedido.total_formateado }}
-                    </div>
+                <hr class="my-4 opacity-0">
 
-                    <div class="mb-3">
-                        <strong>Notas:</strong>
-                        {{ pedido.notas if pedido.notas else 'Sin notas' }}
-                    </div>
-
-                    <div class="mb-4">
-                        <strong>Usuario:</strong> {{ pedido.id_usuario }}
-                    </div>
-
+                <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                    <button onclick="window.print();" class="btn btn-dark btn-sm rounded-pill px-3 shadow-sm">
+                        <i class="bi bi-printer me-2"></i>Imprimir Recibo
+                    </button>
+                    
                     <div class="d-flex gap-2">
-                        <a href="{{ url_for('pedidos.editar', id=pedido.id) }}" class="btn btn-warning">
-                            Editar
+                        <a href="{{ url_for('pedidos.ver', id=pedido.id) }}" class="btn btn-outline-primary btn-sm rounded-pill">
+                            <i class="bi bi-fullscreen me-1"></i> Pantalla Completa
                         </a>
-
-                        <a href="{{ url_for('pedidos.lista') }}" class="btn btn-secondary">
-                            Volver
-                        </a>
-
-                        <form action="{{ url_for('pedidos.eliminar', id=pedido.id) }}" method="POST" class="d-inline">
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este pedido?')">
-                                Eliminar
-                            </button>
-                        </form>
                     </div>
                 </div>
             </div>
-           {% else %}
-                <div class="alert alert-warning">
-                    No se encontró el pedido
-                </div>
-
-                <a href="{{ url_for('pedidos.lista') }}" class="btn btn-secondary">
-                    Volver
-                </a>
-            {% endif %}
-
         </div>
+        
+        {% else %}
+        <div class="text-center py-4">
+            <i class="bi bi-exclamation-circle text-muted display-4"></i>
+            <p class="mt-2">No se pudo cargar la información.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endblock %}
+
+<style>
+    .fw-black { font-weight: 900; }
+    @media print {
+        .btn, .btn-close, .btn-outline-primary, hr { display: none !important; }
+        .card { border: 1px solid #eee !important; box-shadow: none !important; }
+        .bg-primary { background-color: #0d6efd !important; color: white !important; -webkit-print-color-adjust: exact; }
+    }
+    /* Estilo para el contenedor del icono */
+    .bg-primary-soft {
+        background-color: rgba(13, 110, 253, 0.08) !important;
+        transition: all 0.3s ease;
+    }
+
+    /* Mejora visual del botón de cierre */
+    .custom-close {
+        background-size: 0.8rem;
+        padding: 1rem;
+        transition: transform 0.2s ease;
+    }
+
+    .custom-close:hover {
+        transform: rotate(90deg);
+    }
+
+    /* Tipografía y espaciado */
+    .modal-header {
+        background: linear-gradient(to bottom, #ffffff, #fafafa);
+    }
+</style>
