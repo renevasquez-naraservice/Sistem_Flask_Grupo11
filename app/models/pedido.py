@@ -1,7 +1,6 @@
 from ..extensions import db
 from datetime import datetime
 
-
 class Pedido(db.Model):
     __tablename__ = "pedidos"
 
@@ -12,7 +11,6 @@ class Pedido(db.Model):
     notas = db.Column(db.Text)
 
     id_usuario = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-
     usuario = db.relationship("User", back_populates="pedidos")
 
     @property
