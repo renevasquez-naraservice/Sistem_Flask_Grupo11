@@ -22,7 +22,7 @@ def ver(id):
     pedido = Pedido.query.filter_by(
         id=id,
         id_usuario=current_user.id
-    ).first_or_404()
+    ).first()
 
     return render_template("pedidos/ver.html", pedido=pedido)
 

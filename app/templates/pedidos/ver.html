@@ -6,6 +6,7 @@
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
+            {% if pedido%}
             <h1 class="fw-bold mb-4">Detalle del pedido</h1>
 
             <div class="card shadow-sm">
@@ -52,6 +53,16 @@
                     </div>
                 </div>
             </div>
+           {% else %}
+                <div class="alert alert-warning">
+                    No se encontró el pedido
+                </div>
+
+                <a href="{{ url_for('pedidos.lista') }}" class="btn btn-secondary">
+                    Volver
+                </a>
+            {% endif %}
+
         </div>
     </div>
 </div>
