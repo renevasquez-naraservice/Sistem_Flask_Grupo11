@@ -1,71 +1,82 @@
-{% extends "base.html" %}
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div class="mb-3 d-flex align-items-center">
+            <h4 class="fw-bold text-dark m-0">
+                {% if pedido %}
+                    <i class="bi bi-pencil-square text-warning me-2"></i>Editar Pedido #{{ pedido.id }}
+                {% else %}
+                    <i class="bi bi-plus-circle text-primary me-2"></i>Nuevo Pedido
+                {% endif %}
+            </h4>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
 
-{% block title %}
-    {% if pedido %}Editar Pedido{% else %}Nuevo Pedido{% endif %} - Plantilla Flask
-{% endblock %}
+        <div class="card border-0 shadow-none">
+            <div class="card-body p-0">
+                <form method="POST" action="{{ url_for('pedidos.editar', id=pedido.id) if pedido else url_for('pedidos.crear') }}" class="needs-validation">
+                    
+                    <div class="mb-3">
+                        <label for="estado" class="form-label fw-bold text-secondary small text-uppercase">Estado del Pedido</label>
+                        <div class="input-group input-custom-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-tag text-muted"></i></span>
+                            <select class="form-select border-start-0 ps-0" id="estado" name="estado" required>
+                                <option value="" disabled selected>Selecciona un estado...</option>
+                                <option value="Pendiente" {% if pedido and pedido.estado == 'Pendiente' %}selected{% endif %}>🟡 Pendiente</option>
+                                <option value="En Proceso" {% if pedido and pedido.estado == 'En Proceso' %}selected{% endif %}>🔵 En Proceso</option>
+                                <option value="Entregado" {% if pedido and pedido.estado == 'Entregado' %}selected{% endif %}>🟢 Entregado</option>
+                                <option value="Cancelado" {% if pedido and pedido.estado == 'Cancelado' %}selected{% endif %}>🔴 Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
 
-{% block content %}
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <h1 class="fw-bold mb-4">
-                {% if pedido %}Editar Pedido{% else %}Nuevo Pedido{% endif %}
-            </h1>
-
-            <div class="card shadow-sm">
-                <div class="card-body p-4">
-                    <form method="POST">
-                        <div class="mb-3">
-                            <label for="estado" class="form-label fw-semibold">Estado</label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="estado"
-                                name="estado"
-                                value="{{ pedido.estado if pedido else '' }}"
-                                placeholder="Ej: pendiente"
+                    <div class="mb-3">
+                        <label for="total" class="form-label fw-bold text-secondary small text-uppercase">Monto Total</label>
+                        <div class="input-group input-custom-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-currency-dollar text-success fw-bold"></i></span>
+                            <input 
+                                type="number" 
+                                step="0.01" 
+                                class="form-control border-start-0 ps-0 fw-bold" 
+                                id="total" 
+                                name="total" 
+                                value="{{ pedido.total if pedido else '' }}" 
+                                placeholder="0.00" 
                                 required
                             >
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="total" class="form-label fw-semibold">Total</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                class="form-control"
-                                id="total"
-                                name="total"
-                                value="{{ pedido.total if pedido else '' }}"
-                                placeholder="Ej: 25.00"
-                                required
-                            >
-                        </div>
+                    <div class="mb-3">
+                        <label for="notas" class="form-label fw-bold text-secondary small text-uppercase">Notas y Observaciones</label>
+                        <textarea 
+                            class="form-control shadow-sm" 
+                            id="notas" 
+                            name="notas" 
+                            rows="3" 
+                            placeholder="Detalles adicionales del pedido..."
+                            style="border-radius: 12px; resize: none;"
+                        >{{ pedido.notas if pedido else '' }}</textarea>
+                    </div>
 
-                        <div class="mb-4">
-                            <label for="notas" class="form-label fw-semibold">Notas</label>
-                            <textarea
-                                class="form-control"
-                                id="notas"
-                                name="notas"
-                                rows="3"
-                                placeholder="Observaciones del pedido"
-                            >{{ pedido.notas if pedido else '' }}</textarea>
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                {% if pedido %}Guardar Cambios{% else %}Crear Pedido{% endif %}
-                            </button>
-
-                            <a href="{{ url_for('pedidos.lista') }}" class="btn btn-secondary">
-                                Cancelar
-                            </a>
-                        </div>
-                    </form>
-                </div>
+                    <div class="mt-4 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-light px-4 rounded-pill fw-bold text-muted" data-bs-dismiss="modal">
+                            Descartar
+                        </button>
+                        <button type="submit" class="btn {% if pedido %}btn-warning{% else %}btn-primary{% endif %} px-4 rounded-pill fw-bold shadow-sm btn-submit">
+                            {% if pedido %}Guardar Cambios{% else %}Crear Pedido{% endif %}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
+
+<style>
+    /* Estilos locales para el componente form */
+    .input-custom-group { border-radius: 12px; overflow: hidden; transition: all 0.3s ease; border: 1px solid #e0e0e0; }
+    .input-custom-group:focus-within { border-color: #0d6efd; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1); }
+    .input-custom-group .form-control, .input-custom-group .form-select, .input-custom-group .input-group-text { border: none; padding-top: 10px; padding-bottom: 10px; }
+    .input-custom-group .form-control:focus, .input-custom-group .form-select:focus { box-shadow: none; }
+    .btn-submit:hover { transform: translateY(-1px); filter: brightness(1.05); }
+</style>
