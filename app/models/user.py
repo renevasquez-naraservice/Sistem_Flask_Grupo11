@@ -61,6 +61,20 @@ class User(db.Model, UserMixin):
         return self.role == 'admin'
     
     @property
+    def is_cocina(self):
+        """Verificar si es cocina"""
+        return self.role == 'cocina'
+    
+    @property
+    def is_user(self):
+        """Verificar si es user"""
+        return self.role == 'user'
+    
+    @property
+    def is_mesero(self):
+        """Verificar si es mesero"""
+        return self.role == 'mesero'
+    @property
     def nombre_completo(self):
         """Obtener nombre completo"""
         return f"{self.nombre} {self.apellido}"

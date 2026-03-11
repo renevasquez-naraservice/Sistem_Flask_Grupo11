@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Pedidos - Admin{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #003da5 100%);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .stat-card {
+        border: none;
+        border-radius: 20px;
+        background: white;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+    }
+
+    .icon-shape {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 1.2rem;
+    }
+
+    .bg-soft-primary { background: #e7f1ff; color: #0d6efd; }
+    .bg-soft-success { background: #e9f7ef; color: #198754; }
+    .bg-soft-warning { background: #fff9e6; color: #f1c40f; }
+    .bg-soft-info { background: #d1ecf1; color: #0dcaf0; }
+
+    .badge-estado {
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        display: inline-block;
+    }
+
+    .filter-select, .search-box {
+        border-radius: 50px;
+        border: 2px solid #eee;
+        transition: all 0.3s;
+        padding: 0.5rem 1rem;
+    }
+    .search-box:focus, .filter-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    }
+
+    .order-card {
+        transition: all 0.3s;
+        border-left: 4px solid transparent;
+    }
+    .order-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .pendiente { border-left-color: #ffc107; }
+    .preparacion { border-left-color: #0dcaf0; }
+    .listo { border-left-color: #198754; }
+    .entregado { border-left-color: #6c757d; }
+    .pagado { border-left-color: #0d6efd; }
+    .cancelado { border-left-color: #dc3545; }
+</style>
+
+<div class="container-fluid py-4 fade-in">
+    <!-- Cabecera -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-6">
+            <h1 class="h2 fw-bold mb-0">
+                <i class="bi bi-receipt-cutoff text-primary me-2"></i>Gestión de Pedidos
+            </h1>
+            <p class="text-muted mb-0">Administra todos los pedidos del restaurante</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('detalles_pedido.crear') }}" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-circle me-2"></i>Nuevo Pedido
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4 g-3">
+        <div class="col-md-3">
+            <div class="stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon-shape bg-soft-warning me-3">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small">Pendientes</span>
+                        <h3 class="mb-0">{{ pedidos|selectattr('estado', 'equalto', 'pendiente')|list|length }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon-shape bg-soft-info me-3">
+                        <i class="bi bi-fire"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small">Preparación</span>
+                        <h3 class="mb-0">{{ pedidos|selectattr('estado', 'equalto', 'preparacion')|list|length }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon-shape bg-soft-success me-3">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small">Listos</span>
+                        <h3 class="mb-0">{{ pedidos|selectattr('estado', 'equalto', 'listo')|list|length }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card shadow-sm p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon-shape bg-soft-primary me-3">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small">Total Hoy</span>
+                        
+                        <h3 class="mb-0">
+                            {% set hoy = current_date.date() %}
+                            {% set contador = 0 %}
+                            {% for p in pedidos %}
+                                {% if p.fecha.date() == hoy %}
+                                    {% set contador = contador + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ contador }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 rounded-start-pill">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0 rounded-end-pill search-box" 
+                               name="buscar" value="{{ buscar }}" placeholder="Buscar por ID, cliente o notas...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select name="estado" class="form-select filter-select">
+                        <option value="">Todos los estados</option>
+                        {% for e in estados %}
+                        <option value="{{ e }}" {% if request.args.estado == e %}selected{% endif %}>
+                            {{ e|capitalize }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="fecha_desde" class="form-control filter-select" 
+                           value="{{ request.args.fecha_desde }}" placeholder="Desde">
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="fecha_hasta" class="form-control filter-select" 
+                           value="{{ request.args.fecha_hasta }}" placeholder="Hasta">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                        <i class="bi bi-funnel me-2"></i>Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de pedidos -->
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="px-4 py-3"># Pedido</th>
+                        <th class="py-3">Fecha</th>
+                        <th class="py-3">Cliente</th>
+                        <th class="py-3">Productos</th>
+                        <th class="py-3">Total</th>
+                        <th class="py-3">Estado</th>
+                        <th class="py-3 text-end px-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                    <tr class="order-card {{ pedido.estado }}">
+                        <td class="px-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="bi bi-receipt text-primary"></i>
+                                </div>
+                                <div>
+                                    <strong>#{{ pedido.id }}</strong>
+                                    <small class="d-block text-muted">{{ pedido.fecha.strftime('%H:%M') }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ pedido.fecha.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {{ pedido.usuario.nombre_completo }}<br>
+                            <small class="text-muted">@{{ pedido.usuario.username }}</small>
+                        </td>
+                        <td>{{ pedido.detalles|length }} productos</td>
+                        <td class="fw-bold text-primary">{{ pedido.total_formateado }}</td>
+                        <td>
+                            {% set colores = {
+                                'pendiente': 'warning',
+                                'preparacion': 'info',
+                                'listo': 'success',
+                                'entregado': 'secondary',
+                                'pagado': 'primary',
+                                'cancelado': 'danger'
+                            } %}
+                            <span class="badge-estado bg-{{ colores[pedido.estado] }} text-white">
+                                {{ pedido.estado|upper }}
+                            </span>
+                        </td>
+                        <td class="text-end px-4">
+                            <div class="btn-group">
+                                <a href="{{ url_for('detalles_pedido.ver', id=pedido.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <!-- <div class="dropdown d-inline-block">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                            type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        {% for e in estados %}
+                                            {% if e != pedido.estado %}
+                                            <li>
+                                                <a class="dropdown-item small cambiar-estado" 
+                                                   href="#" data-id="{{ pedido.id }}" data-estado="{{ e }}">
+                                                    <span class="badge-estado bg-{{ colores[e] }} text-white me-2">{{ e|upper }}</span>
+                                                </a>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div> -->
+                                <a href="{{ url_for('detalles_pedido.editar', id=pedido.id) }}" 
+                                   class="btn btn-sm btn-outline-warning" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('detalles_pedido.eliminar', id=pedido.id) }}" 
+                                      style="display: inline;" onsubmit="return confirm('¿Eliminar pedido #{{ pedido.id }}?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cambiar estado vía AJAX
+    document.querySelectorAll('.cambiar-estado').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const id = this.dataset.id;
+            const estado = this.dataset.estado;
+            
+            fetch(`/pedidos/${id}/estado`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado: estado })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) location.reload();
+                else alert('Error: ' + data.error);
+            });
+        });
+    });
+</script>
+{% endblock %}

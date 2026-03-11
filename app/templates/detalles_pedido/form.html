@@ -1,0 +1,573 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Pedido{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #003da5 100%);
+        --success-gradient: linear-gradient(135deg, #198754 0%, #0f5132 100%);
+        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .form-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .product-row {
+        transition: all 0.3s;
+        border: 1px solid #eee;
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: white;
+    }
+
+    .product-row:hover {
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        border-color: #0d6efd;
+    }
+
+    .product-select {
+        border-radius: 12px;
+        border: 2px solid #eee;
+        padding: 0.6rem 1rem;
+        font-weight: 500;
+    }
+
+    .product-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    }
+
+    .btn-add-product {
+        background: var(--success-gradient);
+        border: none;
+        padding: 0.8rem 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s;
+    }
+
+    .btn-add-product:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(25, 135, 84, 0.3);
+    }
+
+    .btn-remove-product {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+
+    .btn-remove-product:hover {
+        background: #bb2d3b;
+        transform: scale(1.05);
+    }
+
+    .resumen-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 20px;
+        padding: 1.5rem;
+        position: sticky;
+        top: 20px;
+    }
+
+    .producto-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px dashed #dee2e6;
+    }
+
+    .producto-item:last-child {
+        border-bottom: none;
+    }
+
+    .total-preview {
+        font-size: 2rem;
+        font-weight: 800;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .badge-stock {
+        background: #fff3cd;
+        color: #856404;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .badge-stock-bajo {
+        background: #f8d7da;
+        color: #842029;
+    }
+
+    .notas-input {
+        border-radius: 16px;
+        border: 2px solid #eee;
+        padding: 1rem;
+        transition: all 0.3s;
+    }
+
+    .notas-input:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    }
+
+    .btn-submit {
+        background: var(--primary-gradient);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: white;
+        width: 100%;
+        transition: all 0.3s;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.4);
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.6;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .stock-alerta {
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        color: #dc3545;
+    }
+</style>
+
+<div class="container-fluid py-4 fade-in">
+    <div class="form-container">
+        <!-- Cabecera -->
+        <div class="d-flex align-items-center mb-4">
+            <a href="{{ url_for('detalles_pedido.lista') }}" class="btn btn-outline-secondary rounded-pill me-3">
+                <i class="bi bi-arrow-left me-2"></i>Volver
+            </a>
+            <div>
+                <h1 class="h2 fw-bold mb-0">
+                    <i class="bi bi-plus-circle-fill text-primary me-2"></i>
+                    Nuevo Pedido
+                </h1>
+                <p class="text-muted mb-0">Completa los datos para registrar un nuevo pedido</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Columna izquierda: Formulario principal -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="card-header bg-primary text-white py-4">
+                        <h4 class="mb-0 fw-bold">
+                            <i class="bi bi-receipt me-2"></i>
+                            Datos del Pedido
+                        </h4>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        <form method="POST" id="pedidoForm">
+                            <!-- Sección de productos -->
+                            <h5 class="fw-bold text-primary mb-3">
+                                <i class="bi bi-basket me-2"></i>
+                                Productos
+                            </h5>
+                            
+                            <div id="productos-container">
+                                <!-- Fila de producto inicial -->
+                                <div class="product-row" id="producto-row-0">
+                                    <div class="row g-3 align-items-center">
+                                        <div class="col-md-6">
+                                            <select class="form-select product-select" 
+                                                    name="producto_id[]" 
+                                                    id="producto_0" 
+                                                    required>
+                                                <option value="" selected disabled>Seleccionar producto...</option>
+                                                {% for producto in productos %}
+                                                <option value="{{ producto.id }}" 
+                                                        data-precio="{{ producto.precio }}"
+                                                        data-stock="{{ producto.stock }}"
+                                                        data-nombre="{{ producto.nombre }}">
+                                                    {{ producto.nombre }} - 
+                                                    ${{ "{:.2f}".format(producto.precio) }}
+                                                    {% if producto.stock < 10 %}
+                                                        (Stock: {{ producto.stock }})
+                                                    {% endif %}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="stock-alerta" id="stock-alerta-0"></div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="number" 
+                                                   class="form-control product-select" 
+                                                   name="cantidad[]" 
+                                                   id="cantidad_0" 
+                                                   value="1" 
+                                                   min="1" 
+                                                   required
+                                                   placeholder="Cantidad">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <span class="badge-stock" id="stock-info-0">
+                                                <i class="bi bi-box me-1"></i>
+                                                <span id="stock-display-0">-</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-md-1 text-end">
+                                            <button type="button" 
+                                                    class="btn-remove-product" 
+                                                    onclick="eliminarProducto(0)"
+                                                    style="display: none;">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botón agregar producto -->
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn-add-product" onclick="agregarProducto()">
+                                    <i class="bi bi-plus-circle me-2"></i>
+                                    Agregar otro producto
+                                </button>
+                            </div>
+
+                            <!-- Notas adicionales -->
+                            <hr class="my-4">
+
+                            <h5 class="fw-bold text-primary mb-3">
+                                <i class="bi bi-chat-dots me-2"></i>
+                                Notas adicionales
+                            </h5>
+                            
+                            <div class="mb-4">
+                                <textarea class="form-control notas-input" 
+                                          name="notas" 
+                                          id="notas" 
+                                          rows="3" 
+                                          placeholder="Ej: Sin cebolla, bien cocido, dirección de entrega..."></textarea>
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Resumen y acciones -->
+            <div class="col-lg-4">
+                <div class="resumen-card shadow-lg">
+                    <h5 class="fw-bold text-primary mb-4">
+                        <i class="bi bi-calculator me-2"></i>
+                        Resumen del Pedido
+                    </h5>
+
+                    <!-- Lista de productos seleccionados -->
+                    <div id="resumen-productos" class="mb-4">
+                        <p class="text-muted text-center py-3">No hay productos seleccionados</p>
+                    </div>
+
+                    <!-- Totales -->
+                    <div class="border-top pt-3 mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span class="fw-bold" id="subtotal">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>IVA (13%):</span>
+                            <span class="fw-bold" id="iva">$0.00</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="h5 fw-bold mb-0">TOTAL:</span>
+                            <span class="total-preview" id="total">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Botón de envío -->
+                    <button type="submit" form="pedidoForm" class="btn-submit" id="btnSubmit">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Crear Pedido
+                    </button>
+                    
+                    <p class="text-muted text-center small mt-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Los productos se descontarán del inventario
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let contadorProductos = 1;
+    const productosSeleccionados = {};
+    
+    // Función para agregar un nuevo producto
+    function agregarProducto() {
+        const container = document.getElementById('productos-container');
+        const nuevoId = contadorProductos++;
+        
+        const nuevaFila = document.createElement('div');
+        nuevaFila.className = 'product-row';
+        nuevaFila.id = `producto-row-${nuevoId}`;
+        nuevaFila.innerHTML = `
+            <div class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <select class="form-select product-select" 
+                            name="producto_id[]" 
+                            id="producto_${nuevoId}" 
+                            required>
+                        <option value="" selected disabled>Seleccionar producto...</option>
+                        {% for producto in productos %}
+                        <option value="{{ producto.id }}" 
+                                data-precio="{{ producto.precio }}"
+                                data-stock="{{ producto.stock }}"
+                                data-nombre="{{ producto.nombre }}">
+                            {{ producto.nombre }} - 
+                            ${{ "{:.2f}".format(producto.precio) }}
+                            {% if producto.stock < 10 %}
+                                (Stock: {{ producto.stock }})
+                            {% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="stock-alerta" id="stock-alerta-${nuevoId}"></div>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" 
+                           class="form-control product-select" 
+                           name="cantidad[]" 
+                           id="cantidad_${nuevoId}" 
+                           value="1" 
+                           min="1" 
+                           required
+                           placeholder="Cantidad">
+                </div>
+                <div class="col-md-2">
+                    <span class="badge-stock" id="stock-info-${nuevoId}">
+                        <i class="bi bi-box me-1"></i>
+                        <span id="stock-display-${nuevoId}">-</span>
+                    </span>
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="button" 
+                            class="btn-remove-product" 
+                            onclick="eliminarProducto(${nuevoId})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(nuevaFila);
+        
+        // Agregar event listeners al nuevo select y cantidad
+        document.getElementById(`producto_${nuevoId}`).addEventListener('change', function() {
+            actualizarInfoProducto(nuevoId);
+        });
+        
+        document.getElementById(`cantidad_${nuevoId}`).addEventListener('input', function() {
+            validarStock(nuevoId);
+            actualizarResumen();
+        });
+    }
+    
+    // Función para eliminar un producto
+    function eliminarProducto(id) {
+        const fila = document.getElementById(`producto-row-${id}`);
+        if (fila) {
+            fila.remove();
+            delete productosSeleccionados[id];
+            actualizarResumen();
+        }
+    }
+    
+    // Función para actualizar la información del producto
+    function actualizarInfoProducto(id) {
+        const select = document.getElementById(`producto_${id}`);
+        const cantidad = document.getElementById(`cantidad_${id}`).value;
+        const stockDisplay = document.getElementById(`stock-display-${id}`);
+        const stockAlerta = document.getElementById(`stock-alerta-${id}`);
+        
+        if (select.value) {
+            const option = select.options[select.selectedIndex];
+            const stock = parseInt(option.dataset.stock);
+            const precio = parseFloat(option.dataset.precio);
+            const nombre = option.dataset.nombre;
+            
+            stockDisplay.textContent = stock;
+            
+            // Guardar en objeto de productos seleccionados
+            productosSeleccionados[id] = {
+                id: select.value,
+                nombre: nombre,
+                precio: precio,
+                stock: stock,
+                cantidad: parseInt(cantidad) || 1
+            };
+            
+            validarStock(id);
+        } else {
+            stockDisplay.textContent = '-';
+            delete productosSeleccionados[id];
+        }
+        
+        actualizarResumen();
+    }
+    
+    // Función para validar stock
+    function validarStock(id) {
+        const select = document.getElementById(`producto_${id}`);
+        const cantidad = document.getElementById(`cantidad_${id}`);
+        const stockAlerta = document.getElementById(`stock-alerta-${id}`);
+        const stockInfo = document.getElementById(`stock-info-${id}`);
+        
+        if (select.value) {
+            const option = select.options[select.selectedIndex];
+            const stock = parseInt(option.dataset.stock);
+            const cantidadVal = parseInt(cantidad.value) || 0;
+            
+            if (cantidadVal > stock) {
+                stockAlerta.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>Stock insuficiente';
+                stockInfo.classList.add('badge-stock-bajo');
+                cantidad.classList.add('is-invalid');
+                return false;
+            } else {
+                stockAlerta.innerHTML = '';
+                stockInfo.classList.remove('badge-stock-bajo');
+                cantidad.classList.remove('is-invalid');
+                
+                // Actualizar productosSeleccionados
+                if (productosSeleccionados[id]) {
+                    productosSeleccionados[id].cantidad = cantidadVal;
+                }
+            }
+        }
+        return true;
+    }
+    
+    // Función para actualizar el resumen del pedido
+    function actualizarResumen() {
+        const resumenDiv = document.getElementById('resumen-productos');
+        let subtotal = 0;
+        let html = '';
+        
+        for (let id in productosSeleccionados) {
+            const prod = productosSeleccionados[id];
+            if (prod && prod.id) {
+                const subtotalItem = prod.precio * prod.cantidad;
+                subtotal += subtotalItem;
+                
+                html += `
+                    <div class="producto-item">
+                        <div>
+                            <span class="fw-bold">${prod.nombre}</span>
+                            <br>
+                            <small class="text-muted">
+                                ${prod.cantidad} x $${prod.precio.toFixed(2)}
+                            </small>
+                        </div>
+                        <span class="fw-bold text-primary">$${subtotalItem.toFixed(2)}</span>
+                    </div>
+                `;
+            }
+        }
+        
+        if (html === '') {
+            html = '<p class="text-muted text-center py-3">No hay productos seleccionados</p>';
+        }
+        
+        resumenDiv.innerHTML = html;
+        
+        // Calcular totales
+        const iva = subtotal * 0.13;
+        const total = subtotal + iva;
+        
+        document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+        document.getElementById('iva').textContent = `$${iva.toFixed(2)}`;
+        document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+    }
+    
+    // Validar el formulario antes de enviar
+    document.getElementById('pedidoForm')?.addEventListener('submit', function(e) {
+        let productosValidos = false;
+        let stockValido = true;
+        
+        for (let id in productosSeleccionados) {
+            if (productosSeleccionados[id] && productosSeleccionados[id].id) {
+                productosValidos = true;
+                if (!validarStock(id)) {
+                    stockValido = false;
+                }
+            }
+        }
+        
+        if (!productosValidos) {
+            e.preventDefault();
+            alert('Debe agregar al menos un producto al pedido');
+            return false;
+        }
+        
+        if (!stockValido) {
+            e.preventDefault();
+            alert('Hay productos con cantidad mayor al stock disponible');
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Inicializar el primer producto
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('producto_0').addEventListener('change', function() {
+            actualizarInfoProducto(0);
+        });
+        
+        document.getElementById('cantidad_0').addEventListener('input', function() {
+            validarStock(0);
+            actualizarResumen();
+        });
+        
+        // Mostrar el botón eliminar si hay más de un producto
+        const observer = new MutationObserver(function(mutations) {
+            const filas = document.querySelectorAll('.product-row');
+            filas.forEach((fila, index) => {
+                const btnEliminar = fila.querySelector('.btn-remove-product');
+                if (btnEliminar) {
+                    btnEliminar.style.display = filas.length > 1 ? 'flex' : 'none';
+                }
+            });
+        });
+        
+        observer.observe(document.getElementById('productos-container'), {
+            childList: true,
+            subtree: true
+        });
+    });
+</script>
+{% endblock %}
