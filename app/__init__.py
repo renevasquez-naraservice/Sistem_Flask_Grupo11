@@ -29,7 +29,8 @@ def create_app(config_class=Config):
     from .routes.productos import productos_bp
     from .routes.admin_usuarios import admin_usuarios_bp        # De admin_usuarios.py
     from .routes.pedidos import pedidos_bp        # De pedidos.py
-    
+    from .routes.detalle_pedido import detalles_pedido_bp        # De detalle_pedido.py
+
     # Registrar blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_dashboard_bp)          # Registrar el blueprint admin
@@ -37,6 +38,6 @@ def create_app(config_class=Config):
     app.register_blueprint(productos_bp)
     app.register_blueprint(admin_usuarios_bp)         # Registrar el blueprint de usuarios
     app.register_blueprint(pedidos_bp)         # Registrar el blueprint de pedidos
-    
+    app.register_blueprint(detalles_pedido_bp)         # Registrar el blueprint de detalles de pedido
     return app
 

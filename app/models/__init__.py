@@ -4,4 +4,5 @@ from .categoria import Categoria
 from .producto import Producto
 from .pedido import Pedido
 from .etiqueta import Etiqueta
-__all__ = ['User', 'Categoria','Producto', 'Pedido', 'Etiqueta']
+from .detalle_pedido import DetallePedido
+__all__ = ['User', 'Categoria','Producto', 'Pedido', 'Etiqueta', 'DetallePedido']

@@ -26,33 +26,64 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
 
-                    {% if current_user.is_admin %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_dashboard.dashboard') }}">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('categorias.lista') }}">
-                            <i class="bi bi-tags"></i> Categorías
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('productos.lista') }}">
-                            <i class="bi bi-tags"></i> Productos
-                        </a>
-                    </li>
-                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('pedidos.lista') }}">
-                            <i class="bi bi-cart"></i>Pedidos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin">
-                            <i class="bi bi-gear"></i> Flask-Admin
-                        </a>
-                    </li>
-                    {% endif %}
+            {% if current_user.is_authenticated %}
+                <!-- Menú para ADMIN -->
+                {% if current_user.is_admin %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_dashboard.dashboard') }}">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('categorias.lista') }}">
+                        <i class="bi bi-tags"></i> Categorías
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('productos.lista') }}">
+                        <i class="bi bi-box"></i> Productos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('pedidos.lista') }}">
+                        <i class="bi bi-cart"></i> Pedidos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('detalles_pedido.lista') }}">
+                        <i class="bi bi-gear"></i> Detalles de Pedido
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- Menú para MESERO -->
+                {% if current_user.is_mesero %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('detalles_pedido.lista') }}">
+                        <i class="bi bi-bell"></i> Servicio
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- Menú para COCINA -->
+                {% if current_user.is_cocina %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('detalles_pedido.lista') }}">
+                        <i class="bi bi-fire"></i> Cocina
+                    </a>        
+                </li>
+                {% endif %}
+                
+                <!-- Menú para CLIENTE (user normal) -->
+                {% if current_user.is_user %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('detalles_pedido.lista') }}">
+                        <i class="bi bi-bag-check"></i> Mis Pedidos
+                    </a>    
+                </li>
+                {% endif %}
+            {% endif %}
+
                 </ul>
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
