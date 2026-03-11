@@ -3,6 +3,9 @@ from flask_login import login_required, current_user
 from ..extensions import db
 from ..models.user import User
 from ..utils.decorators import admin_required
+from ..models.pedido import Pedido
+
+from sqlalchemy import func
 
 admin_usuarios_bp = Blueprint('admin_usuarios', __name__, url_prefix='/admin/usuarios')
 
@@ -38,7 +41,7 @@ def usuarios():
         query = query.filter_by(activo=(activo_filtro == 'True'))
     
     usuarios = query.order_by(User.fecha_registro.desc()).all()
-    roles = ['admin', 'user']
+    roles = ['admin', 'user','user','mesero','cocina']
     
     return render_template('admin/usuarios/listar.html', 
                          usuarios=usuarios,
@@ -53,11 +56,11 @@ def crear():
     if request.method == 'POST':
         if User.query.filter_by(username=request.form['username']).first():
             flash('El nombre de usuario ya existe', 'error')
-            return render_template('admin/usuarios/crear.html', roles=['admin', 'user'])
+            return render_template('admin/usuarios/crear.html', roles=['admin', 'user','mesero','cocina'])
         
         if User.query.filter_by(email=request.form['email']).first():
             flash('El email ya está registrado', 'error')
-            return render_template('admin/usuarios/crear.html', roles=['admin', 'user'])
+            return render_template('admin/usuarios/crear.html', roles=['admin', 'user','mesero','cocina'])
 
         activo = 'activo' in request.form
         
@@ -78,15 +81,19 @@ def crear():
         flash(f'Usuario {usuario.nombre_completo} creado exitosamente', 'success')
         return redirect(url_for('admin_usuarios.usuarios'))
     
-    return render_template('admin/usuarios/crear.html', roles=['admin', 'user'])
+    return render_template('admin/usuarios/crear.html', roles=['admin', 'user','mesero','cocina'])
 
 @admin_usuarios_bp.route('/usuarios/<int:id>')
 @login_required
 @admin_required
 def ver(id):
-    """Ver detalle de usuario"""
+    """Ver detalle de usuario con sus pedidos"""
     usuario = User.query.get_or_404(id)
-    return render_template('admin/usuarios/ver.html', usuario=usuario)
+    
+    # Obtener pedidos del usuario ordenados por fecha descendente
+    pedidos = Pedido.query.filter_by(id_usuario=id).order_by(Pedido.fecha.desc()).all()
+    
+    return render_template('admin/usuarios/ver.html',  usuario=usuario, pedidos=pedidos)
 
 @admin_usuarios_bp.route('/usuarios/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
