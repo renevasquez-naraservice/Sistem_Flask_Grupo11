@@ -226,11 +226,15 @@
                             <div class="row g-4">
                                 <div class="col-md-5 text-center">
                                     <label class="form-label fw-bold d-block">Imagen Actual</label>
-                                    <img src="{{ img_url }}" class="img-thumbnail mb-3 rounded-3" style="max-height: 200px;" onerror="this.src='https://placehold.co/400x400?text=No+Image';">
+                                    <div class="image-preview mb-3" id="previewEdit{{ producto.id }}">
+                                        <img src="{{ img_url }}" class="img-thumbnail rounded-3" style="max-height: 200px;" 
+                                            onerror="this.src='https://placehold.co/400x400?text=No+Image';">
+                                    </div>
                                     <div class="mt-2">
                                         <label class="btn btn-outline-primary btn-sm rounded-pill w-100">
                                             <i class="bi bi-camera-fill me-1"></i> Cambiar Foto
-                                            <input type="file" name="imagen_archivo" class="d-none" accept="image/*">
+                                            <input type="file" name="imagen_archivo" class="d-none" accept="image/*" 
+                                                onchange="previewImageEdit(this, '{{ producto.id }}')">
                                         </label>
                                     </div>
                                 </div>
