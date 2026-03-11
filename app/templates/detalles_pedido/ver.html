@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Pedido #{{ pedido.id }} - Detalle{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('detalles_pedido.lista') }}">Pedidos</a></li>
+            <li class="breadcrumb-item active">Pedido #{{ pedido.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="bi bi-receipt me-2"></i>Pedido #{{ pedido.id }}</h4>
+                        <span class="badge bg-light text-dark fs-6">{{ pedido.estado|upper }}</span>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary mb-3">Información General</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td class="text-muted">Fecha:</td>
+                                    <td>{{ pedido.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Cliente:</td>
+                                    <td>{{ pedido.usuario.nombre_completo }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Email:</td>
+                                    <td>{{ pedido.usuario.email }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-primary mb-3">Productos</h6>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-end">Precio Unit.</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detalle in pedido.detalles %}
+                                <tr>
+                                    <td>{{ detalle.producto.nombre }}</td>
+                                    <td class="text-center">{{ detalle.cantidad }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(detalle.precio_unitario) }}</td>
+                                    <td class="text-end fw-bold">${{ "%.2f"|format(detalle.subtotal) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">TOTAL:</td>
+                                    <td class="text-end fw-bold text-primary fs-5">{{ pedido.total_formateado }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    {% if pedido.notas %}
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-chat-dots me-2"></i>
+                        <strong>Notas:</strong> {{ pedido.notas }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-truck me-2"></i>Estado del Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% set estados = ['pendiente', 'preparacion', 'listo', 'entregado', 'pagado'] %}
+                        {% for e in estados %}
+                        <div class="d-flex mb-3">
+                            <div class="me-3">
+                                {% if loop.index0 <= estados.index(pedido.estado) %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                {% else %}
+                                <i class="bi bi-circle text-muted"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <strong>{{ e|capitalize }}</strong>
+                                {% if e == pedido.estado %}
+                                <span class="badge bg-primary ms-2">Actual</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <a href="{{ url_for('detalles_pedido.lista') }}" class="btn btn-secondary w-100 rounded-pill">
+                        <i class="bi bi-arrow-left me-2"></i>Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

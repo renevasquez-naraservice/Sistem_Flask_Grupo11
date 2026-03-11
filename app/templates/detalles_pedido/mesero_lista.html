@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Servicio - Pedidos{% endblock %}
+
+{% block content %}
+<style>
+    .order-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .service-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border-left: 4px solid transparent;
+        transition: all 0.3s;
+    }
+    
+    .service-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+    
+    .pendiente { border-left-color: #ffc107; }
+    .preparacion { border-left-color: #0dcaf0; }
+    .listo { border-left-color: #198754; }
+    
+    .table-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: #f8f9fa;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .action-button {
+        width: 100%;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .action-button:hover {
+        transform: scale(1.02);
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 fw-bold">
+            <i class="bi bi-bell text-warning me-2"></i>Servicio - Pedidos Activos
+        </h1>
+        <a href="{{ url_for('detalles_pedido.crear') }}" class="btn btn-primary rounded-pill px-4">
+            <i class="bi bi-plus-circle me-2"></i>Tomar Pedido
+        </a>
+    </div>
+
+    <div class="order-grid">
+        {% for pedido in pedidos %}
+        <div class="service-card {{ pedido.estado }}" style="position: relative;">
+            <div class="table-badge">
+                {% if pedido.mesa %}Mesa {{ pedido.mesa.numero }}{% else %}Llevar{% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <h3 class="h4 mb-0">#{{ pedido.id }}</h3>
+                <small class="text-muted">{{ pedido.fecha.strftime('%H:%M') }}</small>
+            </div>
+            
+            <div class="mb-3">
+                <i class="bi bi-person me-1"></i>{{ pedido.usuario.nombre_completo }}<br>
+                <small class="text-muted">{{ pedido.detalles|length }} productos</small>
+            </div>
+            
+            <div class="mb-3">
+                {% for detalle in pedido.detalles[:2] %}
+                <div class="d-flex justify-content-between small">
+                    <span>{{ detalle.cantidad }}x {{ detalle.producto.nombre }}</span>
+                    <span>${{ "%.0f"|format(detalle.subtotal) }}</span>
+                </div>
+                {% endfor %}
+                {% if pedido.detalles|length > 2 %}
+                <div class="text-muted small">+{{ pedido.detalles|length - 2 }} más</div>
+                {% endif %}
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <strong>Total:</strong>
+                <span class="h5 text-primary mb-0">{{ pedido.total_formateado }}</span>
+            </div>
+            
+            {% if pedido.estado == 'listo' %}
+            <button class="action-button btn-success" onclick="cambiarEstado({{ pedido.id }}, 'entregado')">
+                <i class="bi bi-check-circle me-2"></i>Entregar al Cliente
+            </button>
+            {% else %}
+            <div class="text-center text-muted small">
+                <i class="bi bi-{% if pedido.estado == 'pendiente' %}clock{% else %}fire{% endif %} me-1"></i>
+                {{ pedido.estado|capitalize }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function cambiarEstado(id, nuevoEstado) {
+        fetch(`/detalles_pedido/${id}/estado`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: nuevoEstado })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) location.reload();
+        });
+    }
+</script>
+{% endblock %}
