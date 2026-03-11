@@ -2,4 +2,6 @@
 from .user import User
 from .categoria import Categoria
 from .producto import Producto
-__all__ = ['User', 'Categoria','Producto']
+from .pedido import Pedido
+from .etiqueta import Etiqueta
+__all__ = ['User', 'Categoria','Producto', 'Pedido', 'Etiqueta']

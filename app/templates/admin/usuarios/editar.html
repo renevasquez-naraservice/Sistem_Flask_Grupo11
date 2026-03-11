@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Usuario - {{ usuario.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Migas de pan -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_usuarios.usuarios') }}">Usuarios</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_usuarios.ver', id=usuario.id) }}">{{ usuario.nombre_completo }}</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Editando: {{ usuario.nombre_completo }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_usuarios.editar', id=usuario.id) }}">
+                        <!-- Información personal -->
+                        <h6 class="border-bottom pb-2 mb-3">Información Personal</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" 
+                                       value="{{ usuario.nombre }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="apellido" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="apellido" name="apellido" 
+                                       value="{{ usuario.apellido }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ usuario.email }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="telefono" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="telefono" name="telefono" 
+                                       value="{{ usuario.telefono or '' }}">
+                            </div>
+                        </div>
+
+                        <!-- Configuración de cuenta -->
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">Configuración de Cuenta</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Nombre de Usuario</label>
+                                <input type="text" class="form-control bg-light" id="username" 
+                                       value="{{ usuario.username }}" readonly disabled>
+                                <small class="text-muted">El nombre de usuario no se puede modificar</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="role" class="form-label">Rol *</label>
+                                <select class="form-select" id="role" name="role" required>
+                                    {% for rol in roles %}
+                                    <option value="{{ rol }}" {{ 'selected' if usuario.role == rol }}>
+                                        {{ rol|capitalize }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Cambio de contraseña -->
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">
+                            <i class="bi bi-lock"></i> Cambiar Contraseña
+                            <small class="text-muted">(Opcional - dejar vacío para mantener la actual)</small>
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nueva_password" class="form-label">Nueva Contraseña</label>
+                                <input type="password" class="form-control" id="nueva_password" name="nueva_password">
+                                <small class="text-muted">Mínimo 6 caracteres</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="confirm_password" class="form-label">Confirmar Contraseña</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                            </div>
+                        </div>
+
+                        <!-- Estado de la cuenta -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="activo" name="activo" value="1"
+                                        {{ 'checked' if usuario.activo else '' }}>
+                                    <label class="form-check-label" for="activo">
+                                        <strong>Cuenta activa</strong> 
+                                        <span class="text-muted">(Desmarcar para desactivar el usuario)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        {% if usuario.id != current_user.id %}
+                        <div class="alert alert-warning mt-3">
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            Estás modificando a <strong>{{ usuario.nombre_completo }}</strong>. 
+                            Los cambios se aplicarán inmediatamente.
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle"></i> 
+                            Estás editando tu propio perfil. Ten cuidado con los cambios.
+                        </div>
+                        {% endif %}
+
+                        <hr class="mt-4">
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_usuarios.ver', id=usuario.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Validación de contraseñas
+document.getElementById('confirm_password').addEventListener('input', function() {
+    var password = document.getElementById('nueva_password').value;
+    var confirm = this.value;
+    
+    if (password !== confirm) {
+        this.setCustomValidity('Las contraseñas no coinciden');
+        this.classList.add('is-invalid');
+    } else {
+        this.setCustomValidity('');
+        this.classList.remove('is-invalid');
+        if (password) {
+            this.classList.add('is-valid');
+        }
+    }
+});
+
+document.getElementById('nueva_password').addEventListener('input', function() {
+    if (this.value && this.value.length < 6) {
+        this.setCustomValidity('La contraseña debe tener al menos 6 caracteres');
+        this.classList.add('is-invalid');
+    } else {
+        this.setCustomValidity('');
+        this.classList.remove('is-invalid');
+        if (this.value) {
+            this.classList.add('is-valid');
+        }
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}
