@@ -17,12 +17,11 @@
             font-family: 'Segoe UI', Roboto, sans-serif;
         }
         
-        /* FIX PARA EL CIRCULO NEGRO/OSCURO EN EL ICONO */
         .swal2-icon {
             border: none !important;
         }
         .swal2-success-ring {
-            display: none !important; /* Elimina el aro que causa el conflicto visual */
+            display: none !important;
         }
     </style>
 
@@ -48,12 +47,12 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('categorias.lista') }}">
-                            <i class="bi bi-tags"></i> Categorías
+                            <i class="bi bi-folder-fill"></i> Categorías
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('productos.lista') }}">
-                            <i class="bi bi-tags"></i> Productos
+                            <i class="bi bi-box-seam"></i> Productos
                         </a>
                     </li>
                      <li class="nav-item">
