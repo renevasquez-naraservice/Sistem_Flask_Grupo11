@@ -21,7 +21,9 @@ def create_app(config_class=Config):
     from .models import categoria
     from .models import producto
     from .models import pedido
-    from .models import etiqueta    
+    from .models import etiqueta  
+    from .models import detalle_pedido
+    from .models import chatbot  
     
     from .routes.auth import auth_bp                    # De auth.py
     from .routes.admin import admin_dashboard_bp        # De admin.py 
@@ -31,6 +33,9 @@ def create_app(config_class=Config):
     from .routes.pedidos import pedidos_bp        # De pedidos.py
     from .routes.detalle_pedido import detalles_pedido_bp        # De detalle_pedido.py
 
+    from .routes.chatbot import chatbot_bp                                                      # ← NUEVO Despues borrar
+    from .routes.dashboard_ia import dashboard_ia_bp                                            # ← NUEVO Despues borrar
+
     # Registrar blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_dashboard_bp)          # Registrar el blueprint admin
@@ -39,5 +44,8 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_usuarios_bp)         # Registrar el blueprint de usuarios
     app.register_blueprint(pedidos_bp)         # Registrar el blueprint de pedidos
     app.register_blueprint(detalles_pedido_bp)         # Registrar el blueprint de detalles de pedido
+
+    app.register_blueprint(chatbot_bp)              # Registrar el blueprint del chatbot        # ← NUEVO Despues borrar
+    app.register_blueprint(dashboard_ia_bp)          # Registrar el blueprint del dashboard de  # ← NUEVO Despues borrar
     return app
 
