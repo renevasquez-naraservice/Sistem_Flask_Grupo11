@@ -5,4 +5,5 @@ from .producto import Producto
 from .pedido import Pedido
 from .etiqueta import Etiqueta
 from .detalle_pedido import DetallePedido
-__all__ = ['User', 'Categoria','Producto', 'Pedido', 'Etiqueta', 'DetallePedido']
+from .chatbot import ConversacionChatbot, MensajeChatbot, LogInteraccionChatbot
+__all__ = ['User', 'Categoria','Producto', 'Pedido', 'Etiqueta', 'DetallePedido', 'ConversacionChatbot', 'MensajeChatbot', 'LogInteraccionChatbot']
