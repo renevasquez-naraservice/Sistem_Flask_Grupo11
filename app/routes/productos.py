@@ -2,10 +2,6 @@ import os
 import uuid
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from werkzeug.utils import secure_filename
-<<<<<<< Updated upstream
-from flask import current_app, request, redirect, url_for, flash, Blueprint, render_template
-=======
->>>>>>> Stashed changes
 from ..models.producto import Producto
 from ..models.categoria import Categoria
 from ..extensions import db
@@ -42,12 +38,6 @@ def crear():
 
         # Manejo de IMAGEN
         nombre_imagen = "default.png"
-<<<<<<< Updated upstream
-        if 'imagen_archivo' in request.files:
-            imagen_subida = procesar_imagen(request.files['imagen_archivo'])
-            if imagen_subida:
-                nombre_imagen = imagen_subida
-=======
         
         if 'imagen_archivo' in request.files:
             file = request.files['imagen_archivo']
@@ -60,7 +50,6 @@ def crear():
                 upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
                 file.save(upload_path)
                 nombre_imagen = filename
->>>>>>> Stashed changes
 
         nuevo_producto = Producto(
             nombre=nombre,
@@ -78,12 +67,8 @@ def crear():
         
     except Exception as e:
         db.session.rollback()
-<<<<<<< Updated upstream
-        flash(f"Error al crear: {e}", "danger")
-=======
         print(f"Error al crear producto: {e}")
         flash(f"Error al crear el producto: {str(e)}", "danger")
->>>>>>> Stashed changes
 
     return redirect(url_for("productos.lista"))
 
@@ -100,14 +85,6 @@ def editar(id):
         producto.categoria_id = int(request.form["categoria"])
         producto.activo = "activo" in request.form
 
-<<<<<<< Updated upstream
-        # --- LÓGICA DE IMAGEN AÑADIDA AQUÍ ---
-        if 'imagen_archivo' in request.files:
-            file = request.files['imagen_archivo']
-            nombre_editado = procesar_imagen(file)
-            if nombre_editado:
-                # Opcional: Eliminar la imagen vieja del disco si no es default.png
-=======
         # --- MANEJO DE IMAGEN EN EDICIÓN ---
         if 'imagen_archivo' in request.files:
             file = request.files['imagen_archivo']
@@ -123,21 +100,11 @@ def editar(id):
                 file.save(upload_path)
                 
                 # Opcional: Borrar imagen anterior si no es la default
->>>>>>> Stashed changes
                 if producto.imagen and producto.imagen != 'default.png':
                     old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], producto.imagen)
                     if os.path.exists(old_path):
                         os.remove(old_path)
                 
-<<<<<<< Updated upstream
-                producto.imagen = nombre_editado
-
-        db.session.commit()
-        flash("Producto actualizado correctamente", "success")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error al editar: {e}", "danger")
-=======
                 # Actualizamos el campo en la base de datos
                 producto.imagen = filename
                 print(f"DEBUG: Imagen actualizada a {filename}")
@@ -149,7 +116,6 @@ def editar(id):
         db.session.rollback()
         print(f"Error crítico en editar: {e}")
         flash("Error al actualizar el producto", "danger")
->>>>>>> Stashed changes
 
     return redirect(url_for("productos.lista"))
 
@@ -157,20 +123,6 @@ def editar(id):
 def eliminar(id):
     producto = Producto.query.get_or_404(id)
     try:
-<<<<<<< Updated upstream
-        # Borrar imagen del disco antes de borrar de la DB (opcional)
-        if producto.imagen and producto.imagen != 'default.png':
-            path = os.path.join(current_app.config['UPLOAD_FOLDER'], producto.imagen)
-            if os.path.exists(path):
-                os.remove(path)
-                
-        db.session.delete(producto)
-        db.session.commit()
-        flash("Producto eliminado", "warning")
-    except Exception as e:
-        db.session.rollback()
-        flash("Error al eliminar", "danger")
-=======
         # Opcional: Borrar imagen al eliminar producto
         if producto.imagen and producto.imagen != 'default.png':
             img_path = os.path.join(current_app.config['UPLOAD_FOLDER'], producto.imagen)
@@ -185,5 +137,4 @@ def eliminar(id):
         print(f"Error al eliminar: {e}")
         flash("Error al eliminar el producto", "danger")
         
->>>>>>> Stashed changes
     return redirect(url_for("productos.lista"))
