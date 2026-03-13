@@ -26,3 +26,7 @@ python-dotenv==1.0.0
 Werkzeug==2.3.7
 setuptools<82
 pytz==2024.1
+
+#ia
+openai==1.0.0
+httpx==0.27.2
