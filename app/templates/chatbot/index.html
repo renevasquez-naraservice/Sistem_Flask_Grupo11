@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Asistente Virtual{% endblock %}
+
+{% block content %}
+<style>
+    .chat-container {
+        height: 500px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 20px;
+        background: #f8f9fa;
+    }
+    
+    .message {
+        margin-bottom: 15px;
+        max-width: 80%;
+    }
+    
+    .user-message {
+        margin-left: auto;
+        text-align: right;
+    }
+    
+    .message-content {
+        display: inline-block;
+        padding: 10px 15px;
+        border-radius: 15px;
+        font-size: 0.95rem;
+    }
+    
+    .user-message .message-content {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .bot-message .message-content {
+        background: white;
+        border: 1px solid #dee2e6;
+    }
+    
+    .message-time {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-top: 3px;
+    }
+    
+    .typing-indicator {
+        display: none;
+        background: white;
+        padding: 10px 15px;
+        border-radius: 15px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .typing-indicator span {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: #0d6efd;
+        border-radius: 50%;
+        margin-right: 3px;
+        animation: typing 1s infinite;
+    }
+    
+    @keyframes typing {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    .suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .suggestion-btn {
+        background: #e9ecef;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .suggestion-btn:hover {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .conversaciones-card {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="row">
+        <!-- Columna principal: Chat -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-robot me-2"></i>
+                        Asistente Virtual de {{ current_user.nombre.split()[0] }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Sugerencias de preguntas -->
+                    <div class="suggestions">
+                        <button class="suggestion-btn" onclick="enviarSugerencia('¿Qué productos tienen disponible?')">
+                            🥩 Productos disponibles
+                        </button>
+                        <button class="suggestion-btn" onclick="enviarSugerencia('¿Cuál es el más vendido?')">
+                            ⭐ Producto más vendido
+                        </button>
+                        <button class="suggestion-btn" onclick="enviarSugerencia('Recomiéndame algo económico')">
+                            💰 Producto económico
+                        </button>
+                        <button class="suggestion-btn" onclick="enviarSugerencia('¿Cuántos productos hay?')">
+                            📊 Total productos
+                        </button>
+                    </div>
+                    
+                    <!-- Área de chat -->
+                    <div id="chatContainer" class="chat-container mb-3">
+                        <!-- Mensaje de bienvenida -->
+                        <div class="message bot-message">
+                            <div class="message-content">
+                                ¡Hola! Soy el asistente virtual de Flask Parrilla. 
+                                ¿En qué puedo ayudarte hoy? Puedes preguntarme sobre productos, precios, recomendaciones y más.
+                            </div>
+                            <div class="message-time">Ahora</div>
+                        </div>
+                        
+                        <!-- Aquí se agregarán los mensajes dinámicamente -->
+                    </div>
+                    
+                    <!-- Indicador de escritura -->
+                    <div id="typingIndicator" class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    
+                    <!-- Input de mensaje -->
+                    <div class="input-group">
+                        <input type="text" id="mensajeInput" class="form-control" 
+                               placeholder="Escribe tu pregunta..." 
+                               onkeypress="if(event.key==='Enter') enviarMensaje()">
+                        <button class="btn btn-primary" onclick="enviarMensaje()">
+                            <i class="bi bi-send"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="nuevaConversacion()" 
+                                title="Nueva conversación">
+                            <i class="bi bi-plus-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Columna lateral: Conversaciones anteriores -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Conversaciones Recientes
+                    </h5>
+                </div>
+                <div class="card-body conversaciones-card">
+                    {% if conversaciones %}
+                        {% for conv in conversaciones %}
+                        <div class="card mb-2">
+                            <div class="card-body p-3">
+                                <small class="text-muted">{{ conv.fecha_inicio.strftime('%d/%m/%Y %H:%M') }}</small>
+                                <p class="mb-1 small">
+                                    <strong>{{ conv.mensajes.first().mensaje[:50] }}...</strong>
+                                </p>
+                                <a href="{{ url_for('chatbot.ver_conversacion', id=conv.id) }}" 
+                                   class="btn btn-sm btn-outline-primary w-100">
+                                    Ver conversación
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No hay conversaciones anteriores</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let idConversacion = null;
+    
+    function agregarMensaje(texto, esUsuario = true) {
+        const container = document.getElementById('chatContainer');
+        const mensajeDiv = document.createElement('div');
+        mensajeDiv.className = `message ${esUsuario ? 'user-message' : 'bot-message'}`;
+        
+        mensajeDiv.innerHTML = `
+            <div class="message-content">${texto}</div>
+            <div class="message-time">${new Date().toLocaleTimeString()}</div>
+        `;
+        
+        container.appendChild(mensajeDiv);
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    function mostrarTyping(mostrar = true) {
+        document.getElementById('typingIndicator').style.display = mostrar ? 'block' : 'none';
+    }
+    
+    function enviarMensaje() {
+        const input = document.getElementById('mensajeInput');
+        const pregunta = input.value.trim();
+        
+        if (!pregunta) return;
+        
+        // Mostrar pregunta del usuario
+        agregarMensaje(pregunta, true);
+        input.value = '';
+        
+        // Mostrar indicador de escritura
+        mostrarTyping(true);
+        
+        // Enviar al servidor
+        fetch('/chatbot/preguntar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pregunta: pregunta,
+                id_conversacion: idConversacion
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            mostrarTyping(false);
+            agregarMensaje(data.respuesta, false);
+            idConversacion = data.id_conversacion;
+        })
+        .catch(error => {
+            mostrarTyping(false);
+            agregarMensaje('Lo siento, hubo un error. Intenta de nuevo.', false);
+            console.error('Error:', error);
+        });
+    }
+    
+    function enviarSugerencia(texto) {
+        document.getElementById('mensajeInput').value = texto;
+        enviarMensaje();
+    }
+    
+    function nuevaConversacion() {
+        fetch('/chatbot/limpiar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            idConversacion = data.id_conversacion;
+            // Limpiar chat
+            const container = document.getElementById('chatContainer');
+            container.innerHTML = `
+                <div class="message bot-message">
+                    <div class="message-content">
+                        ¡Hola! Soy el asistente virtual de Flask Parrilla. 
+                        ¿En qué puedo ayudarte hoy? Puedes preguntarme sobre productos, precios, recomendaciones y más.
+                    </div>
+                    <div class="message-time">Ahora</div>
+                </div>
+            `;
+        });
+    }
+</script>
+{% endblock %}

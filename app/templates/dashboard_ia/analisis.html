@@ -1,0 +1,538 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Inteligente{% endblock %}
+
+{% block content %}
+<style>
+    .insight-card {
+        transition: all 0.3s;
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .insight-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .insight-icon {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 1.5rem;
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #0d6efd 0%, #003da5 100%);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #198754 0%, #0f5132 100%);
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
+    }
+    
+    .bg-gradient-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #0dcaf0 0%, #087990 100%);
+    }
+    
+    .stat-number {
+        font-size: 2.2rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .resumen-ejecutivo {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left: 4px solid #0d6efd;
+        padding: 20px;
+        border-radius: 10px;
+        font-style: italic;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- Cabecera -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 fw-bold">
+            <i class="bi bi-cpu text-primary me-2"></i>
+            Dashboard Inteligente
+        </h1>
+        <span class="badge bg-success p-2">
+            <i class="bi bi-robot me-1"></i>
+            Análisis con IA
+        </span>
+    </div>
+
+    <!-- Resumen Ejecutivo (si existe) -->
+    {% if insights and insights[0].tipo == 'resumen' %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="resumen-ejecutivo">
+                <i class="bi bi-chat-quote fs-1 text-primary float-start me-3"></i>
+                <h5 class="text-primary">Resumen Ejecutivo</h5>
+                <p class="lead mb-0">{{ insights[0].descripcion }}</p>
+            </div>
+        </div>
+    </div>
+    <!-- Quitamos el resumen de la lista para no duplicar -->
+    {% set insights = insights[1:] %}
+    {% endif %}
+
+    <!-- Grid de Insights -->
+    <div class="row g-4">
+        {% for insight in insights %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card insight-card shadow-sm h-100 border-0">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <div class="d-flex align-items-center">
+                        <div class="insight-icon bg-{{ insight.color }} bg-opacity-10 me-3">
+                            <i class="bi {{ insight.icono }} text-{{ insight.color }}"></i>
+                        </div>
+                        <h5 class="mb-0">{{ insight.titulo }}</h5>
+                    </div>
+                </div>
+                <div class="card-body px-4">
+                    <p class="mb-3">{{ insight.descripcion }}</p>
+                    
+                    {% if insight.tipo == 'top_product' %}
+                    <div class="mt-3 bg-light p-3 rounded">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Ventas:</span>
+                            <span class="fw-bold">{{ insight.cantidad }} unidades</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Ingresos:</span>
+                            <span class="fw-bold text-primary">${{ "{:,.2f}".format(insight.ingresos) }}</span>
+                        </div>
+                    </div>
+                    
+                    {% elif insight.tipo == 'popular_category' %}
+                    <div class="mt-3">
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-{{ insight.color }}" 
+                                 style="width: {{ insight.porcentaje }}%">
+                                {{ insight.porcentaje }}%
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2 small">
+                            <span>{{ insight.productos }} productos</span>
+                            <span>{{ insight.stock }} unidades</span>
+                        </div>
+                    </div>
+                    
+                    {% elif insight.tipo == 'prediccion' %}
+                    <div class="mt-3 alert alert-{{ 'danger' if insight.dias < 5 else 'warning' }} mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>{{ insight.nivel }}</strong><br>
+                        <small>{{ insight.dias }} días de stock restante</small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white border-0 pb-4 px-4">
+                    <small class="text-muted">
+                        <i class="bi bi-clock me-1"></i>
+                        Análisis en tiempo real
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Mensaje si no hay insights -->
+    {% if not insights %}
+    <div class="row">
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-robot display-1 text-muted"></i>
+            <h4 class="mt-3">No hay datos suficientes para analizar</h4>
+            <p class="text-muted">Comienza a registrar ventas para ver insights inteligentes.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sección de métricas rápidas mejorada -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Métricas Rápidas</h5>
+                    <span class="badge bg-primary">Actualizado en tiempo real</span>
+                </div>
+                <div class="card-body">
+                    {% set top_product = namespace(nombre='N/A', cantidad=0) %}
+                    {% set alertas_count = namespace(alto=0, bajo=0, agotado=0) %}
+                    {% set ventas_totales = namespace(valor=0) %}
+                    
+                    {% for insight in insights %}
+                        {% if insight.tipo == 'top_product' %}
+                            {% set top_product.nombre = insight.producto %}
+                            {% set top_product.cantidad = insight.cantidad %}
+                        {% elif insight.tipo == 'bajo_stock' %}
+                            {% set alertas_count.bajo = alertas_count.bajo + 1 %}
+                        {% elif insight.tipo == 'sin_stock' %}
+                            {% set alertas_count.agotado = alertas_count.agotado + 1 %}
+                        {% elif insight.tipo == 'ventas_mes' %}
+                            {% set ventas_totales.valor = insight.total %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card bg-light border-0">
+                                <div class="card-body text-center p-3">
+                                    <small class="text-muted text-uppercase tracking-wide">Producto Estrella</small>
+                                    <h4 class="fw-bold text-primary mb-0">{{ top_product.nombre }}</h4>
+                                    <small>{{ top_product.cantidad }} unidades vendidas</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card bg-light border-0">
+                                <div class="card-body text-center p-3">
+                                    <small class="text-muted text-uppercase">Alertas</small>
+                                    <h4 class="fw-bold text-warning mb-0">{{ alertas_count.bajo }}</h4>
+                                    <small>stock bajo</small>
+                                    {% if alertas_count.agotado > 0 %}
+                                    <div class="mt-1"><span class="badge bg-danger">{{ alertas_count.agotado }} agotados</span></div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card bg-light border-0">
+                                <div class="card-body text-center p-3">
+                                    <small class="text-muted text-uppercase">Ventas Mes</small>
+                                    <h4 class="fw-bold text-success mb-0">${{ "{:,.0f}".format(ventas_totales.valor) }}</h4>
+                                    <small>total ingresos</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card bg-light border-0">
+                                <div class="card-body text-center p-3">
+                                    <small class="text-muted text-uppercase">Insights</small>
+                                    <h4 class="fw-bold text-info mb-0">{{ insights|length }}</h4>
+                                    <small>análisis generados</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Segunda sección: Análisis Visual con Pills -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-pie-chart-fill text-primary me-2"></i>
+                            Análisis Visual del Negocio
+                        </h5>
+                        
+                        <!-- Pills de navegación -->
+                        <ul class="nav nav-pills" id="chartTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="ventas-tab" data-bs-toggle="pill" data-bs-target="#ventas" type="button" role="tab">
+                                    <i class="bi bi-graph-up me-1"></i> Ventas
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="productos-tab" data-bs-toggle="pill" data-bs-target="#productos" type="button" role="tab">
+                                    <i class="bi bi-box-seam me-1"></i> Productos
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="categorias-tab" data-bs-toggle="pill" data-bs-target="#categorias" type="button" role="tab">
+                                    <i class="bi bi-tags me-1"></i> Categorías
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="predicciones-tab" data-bs-toggle="pill" data-bs-target="#predicciones" type="button" role="tab">
+                                    <i class="bi bi-graph-up-arrow me-1"></i> Predicciones
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Contenido de los tabs -->
+                    <div class="tab-content" id="chartTabsContent">
+                        
+                        <!-- Tab 1: Ventas -->
+                        <div class="tab-pane fade show active" id="ventas" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <canvas id="ventasChart" style="max-height: 300px; width: 100%;"></canvas>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-4 rounded-3 h-100">
+                                        <h6 class="fw-bold mb-3">📊 Resumen de Ventas</h6>
+                                        {% set ventas = insights|selectattr('tipo', 'equalto', 'ventas_mes')|first %}
+                                        {% if ventas %}
+                                            <div class="mb-3">
+                                                <small class="text-muted d-block">Total del mes</small>
+                                                <span class="h3 text-primary">${{ "{:,.0f}".format(ventas.total) }}</span>
+                                            </div>
+                                            <div class="mb-3">
+                                                <small class="text-muted d-block">Pedidos</small>
+                                                <span class="h4">{{ ventas.cantidad }}</span>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">Tendencia</small>
+                                                <span class="badge bg-{{ 'success' if ventas.tendencia == '↑' else 'danger' }} fs-6">
+                                                    {{ ventas.tendencia }} {{ "%.1f"|format(ventas.variacion) }}%
+                                                </span>
+                                            </div>
+                                        {% else %}
+                                            <p class="text-muted">No hay datos de ventas suficientes</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tab 2: Productos más vendidos -->
+                        <div class="tab-pane fade" id="productos" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <canvas id="productosChart" style="max-height: 300px; width: 100%;"></canvas>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-4 rounded-3 h-100">
+                                        <h6 class="fw-bold mb-3">🏆 Top Productos</h6>
+                                        <div class="list-group list-group-flush">
+                                            {% set productos_vendidos = [] %}
+                                            {% for insight in insights %}
+                                                {% if insight.tipo == 'top_product' %}
+                                                    <div class="list-group-item bg-transparent px-0">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span>{{ insight.producto }}</span>
+                                                            <span class="badge bg-primary rounded-pill">{{ insight.cantidad }} uds</span>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tab 3: Categorías -->
+                        <div class="tab-pane fade" id="categorias" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <canvas id="categoriasChart" style="max-height: 300px; width: 100%;"></canvas>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-4 rounded-3 h-100">
+                                        <h6 class="fw-bold mb-3">📦 Distribución</h6>
+                                        {% set categoria = insights|selectattr('tipo', 'equalto', 'popular_category')|first %}
+                                        {% if categoria %}
+                                            <div class="mb-3">
+                                                <small class="text-muted d-block">Categoría principal</small>
+                                                <span class="h5">{{ categoria.categoria }}</span>
+                                                <div class="progress mt-2" style="height: 10px;">
+                                                    <div class="progress-bar bg-info" style="width: {{ categoria.porcentaje }}%"></div>
+                                                </div>
+                                                <small class="text-muted">{{ "%.1f"|format(categoria.porcentaje) }}% del inventario</small>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tab 4: Predicciones -->
+                        <div class="tab-pane fade" id="predicciones" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <canvas id="prediccionesChart" style="max-height: 300px; width: 100%;"></canvas>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-4 rounded-3 h-100">
+                                        <h6 class="fw-bold mb-3">🔮 Alertas Tempranas</h6>
+                                        {% set tiene_predicciones = false %}
+                                        {% for insight in insights %}
+                                            {% if insight.tipo == 'prediccion' %}
+                                                {% set tiene_predicciones = true %}
+                                                <div class="alert alert-{{ 'danger' if insight.dias < 5 else 'warning' }} mb-2">
+                                                    <strong>{{ insight.producto }}</strong><br>
+                                                    <small>{{ insight.dias }} días restantes</small>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if not tiene_predicciones %}
+                                            <p class="text-muted">No hay predicciones activas</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script para los gráficos -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Datos desde Flask (deberías pasarlos desde la ruta)
+        const ventasData = {
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Ventas Mensuales ($)',
+                data: [1200, 1900, 3000, 2500, 2800, 4094],
+                backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                borderColor: 'rgba(13, 110, 253, 1)',
+                borderWidth: 2,
+                tension: 0.4
+            }]
+        };
+
+        const productosData = {
+            labels: [
+                {% for insight in insights if insight.tipo == 'top_product' %}
+                    '{{ insight.producto }}'{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Unidades Vendidas',
+                data: [
+                    {% for insight in insights if insight.tipo == 'top_product' %}
+                        {{ insight.cantidad }}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)'
+                ],
+                borderColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 206, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(153, 102, 255)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        const categoriasData = {
+            labels: [{% for insight in insights if insight.tipo == 'popular_category' %}'{{ insight.categoria }}',{% endfor %}],
+            datasets: [{
+                label: 'Productos por Categoría',
+                data: [{% for insight in insights if insight.tipo == 'popular_category' %}{{ insight.productos }},{% endfor %}],
+                backgroundColor: [
+                    'rgba(255, 159, 64, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 205, 86, 0.2)'
+                ],
+                borderColor: [
+                    'rgb(255, 159, 64)',
+                    'rgb(75, 192, 192)',
+                    'rgb(153, 102, 255)',
+                    'rgb(255, 205, 86)'
+                ],
+                borderWidth: 1
+            }]
+        };
+
+        const prediccionesData = {
+            labels: [{% for insight in insights if insight.tipo == 'prediccion' %}'{{ insight.producto }}',{% endfor %}],
+            datasets: [{
+                label: 'Días hasta agotarse',
+                data: [{% for insight in insights if insight.tipo == 'prediccion' %}{{ insight.dias }},{% endfor %}],
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgb(255, 99, 132)',
+                borderWidth: 1
+            }]
+        };
+
+        // Inicializar gráficos
+        new Chart(document.getElementById('ventasChart'), {
+            type: 'line',
+            data: ventasData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('productosChart'), {
+            type: 'bar',
+            data: productosData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('categoriasChart'), {
+            type: 'doughnut',
+            data: categoriasData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('prediccionesChart'), {
+            type: 'bar',
+            data: prediccionesData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Días restantes'
+                        }
+                    }
+                }
+            }
+        });
+    });
+    </script>
+</div>
+{% endblock %}

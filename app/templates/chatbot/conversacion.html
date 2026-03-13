@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Conversación #{{ conversacion.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('chatbot.index') }}">Asistente Virtual</a></li>
+            <li class="breadcrumb-item active">Conversación #{{ conversacion.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-dots me-2"></i>
+                        Conversación del {{ conversacion.fecha_inicio.strftime('%d/%m/%Y %H:%M') }}
+                    </h5>
+                    <span class="badge bg-light text-primary">
+                        {{ mensajes|length }} mensajes
+                    </span>
+                </div>
+                
+                <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                    {% for msg in mensajes %}
+                        <div class="message mb-3 {% if msg.es_usuario %}text-end{% endif %}">
+                            <div class="d-inline-block {% if msg.es_usuario %}bg-primary text-white{% else %}bg-light{% endif %} rounded-3 p-3" style="max-width: 80%;">
+                                <div class="small fw-bold mb-1">
+                                    {% if msg.es_usuario %}
+                                        <i class="bi bi-person-circle me-1"></i> Tú
+                                    {% else %}
+                                        <i class="bi bi-robot me-1"></i> Asistente
+                                    {% endif %}
+                                </div>
+                                <div class="mb-1">{{ msg.mensaje }}</div>
+                                <div class="small {% if msg.es_usuario %}text-white-50{% else %}text-muted{% endif %}">
+                                    {{ msg.fecha.strftime('%H:%M') }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="card-footer bg-white">
+                    <a href="{{ url_for('chatbot.index') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver al Chat
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .message .d-inline-block {
+        word-wrap: break-word;
+    }
+</style>
+{% endblock %}

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4/bootstrap-4.css">
+    
     <style>
         .swal2-popup {
             border-radius: 20px !important;
@@ -26,6 +27,9 @@
     </style>
 
     {% block extra_css %}{% endblock %}
+
+        <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -95,6 +99,22 @@
                     </a>    
                 </li>
                 {% endif %}
+
+                <!-- Para todos los usuarios autenticados -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('chatbot.index') }}">
+                        <i class="bi bi-robot"></i> Asistente Virtual
+                    </a>
+                </li>
+
+                <!-- Solo para admin -->
+                {% if current_user.is_admin %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard_ia.analisis') }}">
+                        <i class="bi bi-cpu"></i> Dashboard IA
+                    </a>
+                </li>
+                {% endif %}  
             {% endif %}
 
                 </ul>
