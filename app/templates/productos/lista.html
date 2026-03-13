@@ -226,6 +226,7 @@
                             <div class="row g-4">
                                 <div class="col-md-5 text-center">
                                     <label class="form-label fw-bold d-block">Imagen Actual</label>
+<<<<<<< Updated upstream
                                     <div class="image-preview mb-3" id="previewEdit{{ producto.id }}">
                                         <img src="{{ img_url }}" class="img-thumbnail rounded-3" style="max-height: 200px;" 
                                             onerror="this.src='https://placehold.co/400x400?text=No+Image';">
@@ -236,6 +237,31 @@
                                             <input type="file" name="imagen_archivo" class="d-none" accept="image/*" 
                                                 onchange="previewImageEdit(this, '{{ producto.id }}')">
                                         </label>
+=======
+                                    <img src="{{ img_url }}" class="img-thumbnail mb-3 rounded-3" style="max-height: 200px;" onerror="this.src='https://placehold.co/400x400?text=No+Image';">
+                                    <div class="col-md-5 text-center">
+                                        <label class="form-label fw-bold d-block">Imagen del Producto</label>
+                                        
+                                        <div class="position-relative d-inline-block w-100">
+                                            <img src="{{ url_for('static', filename='uploads/' + producto.imagen) }}" 
+                                                id="img-preview-{{ producto.id }}" 
+                                                class="img-thumbnail mb-3 rounded-3 shadow-sm" 
+                                                style="max-height: 250px; width: 100%; object-fit: cover;" 
+                                                onerror="this.src='https://placehold.co/400x400?text=No+Image';">
+                                            
+                                            <div class="mt-2">
+                                                <label class="btn btn-outline-primary btn-sm rounded-pill w-100 shadow-sm">
+                                                    <i class="bi bi-camera-fill me-1"></i> Cambiar Foto
+                                                    <input type="file" 
+                                                        name="imagen_archivo" 
+                                                        class="d-none" 
+                                                        accept="image/*" 
+                                                        onchange="previewImage(this, '{{ producto.id }}')">
+                                                </label>
+                                                <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Formatos: JPG, PNG, WEBP</small>
+                                            </div>
+                                        </div>
+>>>>>>> Stashed changes
                                     </div>
                                 </div>
                                 <div class="col-md-7">
@@ -391,51 +417,83 @@
         });
     }
 
-    searchInput.addEventListener('keyup', filterProducts);
-    categoryFilter.addEventListener('change', filterProducts);
-    statusFilter.addEventListener('change', filterProducts);
+    if(searchInput) searchInput.addEventListener('keyup', filterProducts);
+    if(categoryFilter) categoryFilter.addEventListener('change', filterProducts);
+    if(statusFilter) statusFilter.addEventListener('change', filterProducts);
 
-    // --- VISTA PREVIA DE IMAGEN ---
-    document.getElementById('inputImageCreate').addEventListener('change', function(e) {
-        const preview = document.getElementById('previewCreate');
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                preview.innerHTML = `<img src="${event.target.result}" style="width:100%; height:100%; object-fit:contain;">`;
+    // --- VISTA PREVIA CREAR PRODUCTO ---
+    const inputCreate = document.getElementById('inputImageCreate');
+    if (inputCreate) {
+        inputCreate.addEventListener('change', function(e) {
+            const preview = document.getElementById('previewCreate');
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    preview.innerHTML = `<img src="${event.target.result}" style="width:100%; height:100%; object-fit:contain; border-radius: 8px;">`;
+                }
+                reader.readAsDataURL(file);
             }
-            reader.readAsDataURL(file);
-        }
-    });
+        });
+    }
 
-    // --- AUTOCOMPLETADO Y VALIDACIÓN DE DUPLICADOS ---
+    // --- VALIDACIÓN DE DUPLICADOS ---
     const inputNombre = document.getElementById('inputNombreNuevo');
     const feedback = document.getElementById('nombreFeedback');
     const btnGuardar = document.getElementById('btnGuardar');
-
-    // Obtenemos todos los nombres que ya existen en las cards para validar
     const nombresExistentes = Array.from(document.querySelectorAll('.card-title')).map(el => el.innerText.trim().toLowerCase());
 
-    inputNombre.addEventListener('input', function() {
-        const valor = this.value.trim().toLowerCase();
-        
-        if (valor === "") {
-            feedback.innerHTML = "";
-            this.classList.remove('is-invalid-custom');
-            btnGuardar.disabled = false;
-            return;
-        }
+    if (inputNombre) {
+        inputNombre.addEventListener('input', function() {
+            const valor = this.value.trim().toLowerCase();
+            if (valor === "") {
+                feedback.innerHTML = "";
+                this.classList.remove('is-invalid-custom');
+                btnGuardar.disabled = false;
+                return;
+            }
+            if (nombresExistentes.includes(valor)) {
+                feedback.innerHTML = `<div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle-fill"></i> Este producto ya existe</div>`;
+                this.classList.add('is-invalid-custom');
+                btnGuardar.disabled = true;
+            } else {
+                feedback.innerHTML = `<div class="text-success small mt-1"><i class="bi bi-check-circle-fill"></i> Nombre disponible</div>`;
+                this.classList.remove('is-invalid-custom');
+                btnGuardar.disabled = false;
+            }
+        });
+    }
 
-        // Si el nombre exacto ya existe, mostramos error y bloqueamos
-        if (nombresExistentes.includes(valor)) {
-            feedback.innerHTML = `<div class="text-danger feedback-msg"><i class="bi bi-exclamation-triangle-fill"></i> Este producto ya existe en el inventario</div>`;
-            this.classList.add('is-invalid-custom');
-            btnGuardar.disabled = true;
-        } else {
-            feedback.innerHTML = `<div class="text-success feedback-msg"><i class="bi bi-check-circle-fill"></i> Nombre disponible</div>`;
-            this.classList.remove('is-invalid-custom');
-            btnGuardar.disabled = false;
+    // --- FUNCIÓN UNIVERSAL VISTA PREVIA (EDITAR) ---
+    function previewImage(input, id) {
+        const preview = document.getElementById(`img-preview-${id}`);
+        const label = input.parentElement; // Guardamos referencia al label
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                // Animación de cambio
+                preview.style.transition = 'opacity 0.2s';
+                preview.style.opacity = '0';
+                
+                setTimeout(() => {
+                    preview.src = e.target.result;
+                    preview.style.opacity = '1';
+                }, 150);
+
+                // ACTUALIZACIÓN DE UI SIN BORRAR EL INPUT
+                label.classList.remove('btn-outline-primary');
+                label.classList.add('btn-success');
+                // Usamos childNodes para no borrar el input oculto
+                const icon = label.querySelector('i');
+                const textNode = Array.from(label.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+                
+                if (icon) icon.className = 'bi bi-check-circle-fill me-1';
+                if (textNode) textNode.textContent = ' Foto lista';
+            }
+            reader.readAsDataURL(input.files[0]);
         }
-    });
+    }
 </script>
 {% endblock %}
