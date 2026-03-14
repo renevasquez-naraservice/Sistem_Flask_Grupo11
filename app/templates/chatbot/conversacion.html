@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Conversación #{{ conversacion.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-light p-2 rounded">
+            <li class="breadcrumb-item"><a href="{{ url_for('chatbot.index') }}" class="text-decoration-none">Asistente Virtual</a></li>
+            <li class="breadcrumb-item active">Sesión #{{ conversacion.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-md-11">
+            <div class="card border-0 shadow-lg overflow-hidden">
+                <div class="card-header bg-gradient bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
+                            <i class="bi bi-robot fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">Historial de Chat</h5>
+                            <small class="opacity-75">{{ conversacion.fecha_inicio.strftime('%d %b, %Y') }}</small>
+                        </div>
+                    </div>
+                    <span class="badge rounded-pill bg-white text-primary fw-bold">
+                        {{ mensajes|length }} mensajes
+                    </span>
+                </div>
+                
+                <div id="chat-container" class="card-body bg-light px-4 py-5" style="height: 600px; overflow-y: auto;">
+                    {% for msg in mensajes %}
+                        <div class="d-flex mb-4 {% if msg.es_usuario %}justify-content-end{% else %}justify-content-start{% endif %}">
+                            <div class="max-width-75">
+                                <div class="p-3 shadow-sm 
+                                    {% if msg.es_usuario %}
+                                        bg-primary text-white rounded-start-4 rounded-top-4
+                                    {% else %}
+                                        bg-white text-dark border rounded-end-4 rounded-top-4
+                                    {% endif %}">
+                                    
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="bi {% if msg.es_usuario %}bi-person-circle{% else %}bi-robot{% endif %} me-2 opacity-75"></i>
+                                        <span class="fw-bold small">{% if msg.es_usuario %}Tú{% else %}Asistente{% endif %}</span>
+                                    </div>
+
+                                    <div class="message-text">
+                                        {{ msg.mensaje | safe }}
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-1 small text-muted {% if msg.es_usuario %}text-end{% endif %}">
+                                    {{ msg.fecha.strftime('%H:%M') }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="card-footer bg-white p-3 border-top-0 d-flex justify-content-between">
+                    <a href="{{ url_for('chatbot.index') }}" class="btn btn-outline-primary rounded-pill px-4">
+                        <i class="bi bi-plus-lg me-2"></i>Nueva Consulta
+                    </a>
+                    <button class="btn btn-light rounded-pill border" onclick="window.print()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #chat-container {
+        scrollbar-width: thin;
+        scrollbar-color: #dee2e6 transparent;
+    }
+    
+    #chat-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #chat-container::-webkit-scrollbar-thumb {
+        background-color: #dee2e6;
+        border-radius: 10px;
+    }
+
+    .max-width-75 {
+        max-width: 80%;
+    }
+
+    .message-text img {
+        max-width: 100%;
+        border-radius: 8px;
+    }
+
+    .message-text p:last-child {
+        margin-bottom: 0;
+    }
+    
+    .shadow-sm:hover {
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.1) !important;
+        transition: box-shadow 0.3s ease-in-out;
+    }
+</style>
+
+<script>
+    window.onload = function() {
+        var chatContainer = document.getElementById("chat-container");
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    };
+</script>
+{% endblock %}
