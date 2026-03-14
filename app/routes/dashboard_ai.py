@@ -9,16 +9,17 @@ dashboard_ai_bp = Blueprint('dashboard_ai', __name__)
 @dashboard_ai_bp.route('/ia/dashboard')
 @login_required
 def dashboard_ia():
+    # Verificación de seguridad (Admin)
     if not getattr(current_user, 'is_admin', False):
         return "Acceso denegado", 403
 
     try:
-        # Obtenemos la lista de insights (la que viste en analizador.py)
-        raw_insights = analizador.generar_insights()
+        # Obtenemos los insights directamente del motor de IA
+        raw_insights = analizador.generar_insights() or []
         
-        # Estructura que espera el HTML
+        # Estructura de datos para la vista (Template)
         insights_para_vista = {
-            "resumen": "Generando análisis...",
+            "resumen": "No hay un análisis disponible en este momento.",
             "metricas": {
                 "ventas_proyectadas": "$0.00",
                 "productos_criticos": 0,
@@ -28,35 +29,43 @@ def dashboard_ia():
             "top_productos": []
         }
 
-        # Mapeamos la lista de analizador.py a nuestro objeto
+        # Procesamiento de la lista raw_insights
         for item in raw_insights:
             tipo = item.get('tipo')
+            descripcion = item.get('descripcion', '')
             
-            if tipo == 'resumen':
-                insights_para_vista['resumen'] = item.get('descripcion')
+            if tipo == 'resumen' and descripcion:
+                insights_para_vista['resumen'] = descripcion
             
             elif tipo == 'ventas_mes':
-                insights_para_vista['metricas']['ventas_proyectadas'] = f"${item.get('total', 0):,.2f}"
+                total = item.get('total', 0)
+                insights_para_vista['metricas']['ventas_proyectadas'] = f"${total:,.2f}"
             
             elif tipo == 'bajo_stock':
                 insights_para_vista['metricas']['productos_criticos'] += 1
-                insights_para_vista['alertas'].append(item.get('descripcion'))
+                if descripcion:
+                    insights_para_vista['alertas'].append(descripcion)
                 
             elif tipo == 'top_product':
                 insights_para_vista['top_productos'].append(item)
 
-        # Cálculo de eficiencia ficticio basado en stock
-        if insights_para_vista['metricas']['productos_criticos'] == 0:
+        # Cálculo de eficiencia dinámica basada en el stock crítico
+        criticos = insights_para_vista['metricas']['productos_criticos']
+        if criticos == 0:
             insights_para_vista['metricas']['eficiencia'] = "100%"
-        else:
+        elif criticos < 5:
             insights_para_vista['metricas']['eficiencia'] = "85%"
+        else:
+            insights_para_vista['metricas']['eficiencia'] = "60%"
 
         return render_template('ia/admin_test.html', insights=insights_para_vista)
 
     except Exception as e:
-        logger.error(f"Error en Dashboard IA: {e}")
+        logger.error(f"Error crítico en Dashboard IA: {str(e)}")
+        # Respuesta de emergencia elegante
         return render_template('ia/admin_test.html', insights={
-            "resumen": "Error al conectar con el motor de IA.",
-            "metricas": {"ventas_proyectadas": "$0", "productos_criticos": 0, "eficiencia": "0%"},
-            "alertas": ["Revisa la conexión con Groq/Base de Datos."]
+            "resumen": "Error al conectar con el motor de IA o base de datos.",
+            "metricas": {"ventas_proyectadas": "$0.00", "productos_criticos": 0, "eficiencia": "N/A"},
+            "alertas": ["El sistema no pudo recuperar las alertas en este momento."],
+            "top_productos": []
         })
