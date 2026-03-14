@@ -5,7 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 dashboard_ai_bp = Blueprint('dashboard_ai', __name__)
-@dashboard_ai_bp.route('/ia/dashboard')
+@dashboard_ai_bp.route('/ai/dashboard')
 @login_required
 def dashboard_ia():
     if not getattr(current_user, 'is_admin', False):
