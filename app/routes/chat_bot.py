@@ -1,47 +1,91 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-# Importa aquí tus modelos de Base de Datos y tu lógica de Llama
+import logging
+import time
+from ..ia.config import chatbot  # Motor de IA 
 
-ia_chat_bp = Blueprint('ia_chat', __name__, url_prefix='/ia/chat')
+# Configuramos el Blueprint del chat
+chatbot_bp = Blueprint('chat_bot', __name__)
 
-@ia_chat_bp.route('/')
+# Logs
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+@chatbot_bp.route('/ia/chat')
 @login_required
 def chat_page():
-    # Esta es la ruta que carga el HTML que acabamos de arreglar
-    return render_template('tu_archivo_chat.html')
+    # Asegúrate de que la ruta al archivo sea la correcta en tu proyecto
+    return render_template('ia/chat_test.html')
 
-@ia_chat_bp.route('/historial')
+@chatbot_bp.route('/ia/chat/historial', methods=['GET'])
 @login_required
 def obtener_historial():
+    """ 
+    Devolvemos sugerencias y un historial vacío por ahora.
+    """
     try:
-        # 1. Buscar la última conversación del usuario en la BD
-        # 2. Si no existe, crear una nueva
-        # 3. Retornar historial y sugerencias iniciales
-        return jsonify({
-            'status': 'success',
-            'id_conversacion': 123, # Ejemplo
-            'historial': [],
-            'sugerencias': ["¿Cuál es el stock de hoy?", "Ventas de la semana"]
-        })
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@ia_chat_bp.route('/preguntar', method=['POST'])
-@login_required
-def preguntar():
-    data = request.json
-    mensaje_usuario = data.get('mensaje')
-    id_conv = data.get('id_conversacion')
-
-    try:
-        # AQUÍ VA TU LÓGICA CON LLAMA 3.3
-        # respuesta_ai = llamar_a_llama(mensaje_usuario)
+        sugerencias = [
+            "¿Qué productos tienen poco stock?",
+            "Resumen de ventas de hoy",
+            "¿Cuáles son las categorías más vendidas?",
+            "Estado de los últimos pedidos"
+        ]
         
         return jsonify({
             'status': 'success',
-            'respuesta': "Esta es una respuesta de prueba de la IA",
-            'datos': [], # Aquí enviarías los JSON de productos si aplica
-            'id_conversacion': id_conv
+            'historial': [], 
+            'sugerencias': sugerencias,
+            'id_conversacion': 1 # Añadimos un ID por defecto para el JS
         })
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        logger.error(f"Error en ruta historial: {e}")
+        return jsonify({'status': 'error', 'historial': [], 'sugerencias': []})
+
+@chatbot_bp.route('/ia/chat/preguntar', methods=['POST'])
+@login_required
+def preguntar():
+    """ Maneja las preguntas y conecta con el motor de IA """
+    inicio_query = time.time()
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'status': 'error', 'respuesta': 'No llegó información.'}), 400
+            
+        mensaje = data.get('mensaje', '').strip()
+        
+        if not mensaje:
+            return jsonify({'status': 'error', 'respuesta': 'El mensaje está vacío.'}), 400
+
+        # Log de auditoría (Usamos .username o .nombre según tu modelo User)
+        user_id = getattr(current_user, 'username', 'Usuario')
+        logger.info(f"Usuario: {user_id} | Consulta: {mensaje}")
+
+        try:
+            # Llamamos al motor
+            resultado = chatbot.procesar_mensaje(mensaje)
+            
+            if not resultado or 'respuesta' not in resultado:
+                raise ValueError("La IA no generó una respuesta válida")
+
+            tiempo_total = round(time.time() - inicio_query, 2)
+
+            # Ajustamos las llaves para que el JS las lea correctamente
+            return jsonify({
+                'status': 'success',
+                'respuesta': resultado.get('respuesta'),
+                'datos': resultado.get('datos_ia'), # El JS espera 'datos'
+                'tiempo': tiempo_total,
+                'id_conversacion': data.get('id_conversacion', 1)
+            })
+
+        except Exception as ia_err:
+            logger.error(f"Error en motor IA: {ia_err}")
+            return jsonify({
+                'status': 'error',
+                'respuesta': "Tuve un problema al procesar la información. ¿Podrías repetir la pregunta?"
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Error general en ruta: {e}")
+        return jsonify({'status': 'error', 'respuesta': 'Error interno del servidor.'}), 500
