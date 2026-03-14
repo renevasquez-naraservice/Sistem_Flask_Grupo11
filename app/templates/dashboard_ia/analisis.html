@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}IA Business Intelligence{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.9);
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #003da5 100%);
+    }
+
+    .dashboard-container { background-color: #f4f7f6; min-height: 100vh; }
+    
+    .insight-card {
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .insight-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    .nav-pills .nav-link {
+        border-radius: 10px;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 10px 20px;
+    }
+
+    .nav-pills .nav-link.active {
+        background: var(--primary-gradient);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    }
+
+    .metric-pill {
+        border-radius: 12px;
+        background: white;
+        padding: 1.5rem;
+        border-left: 5px solid #0d6efd;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 350px;
+        width: 100%;
+    }
+</style>
+
+<div class="dashboard-container py-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a href="#">Admin</a></li>
+                        <li class="breadcrumb-item active">IA Insights</li>
+                    </ol>
+                </nav>
+                <h2 class="fw-bold mb-0">Análisis Inteligente</h2>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-white text-dark border p-2 mb-1">
+                    <i class="bi bi-calendar3 me-2"></i>{{ now.strftime('%d %b, %Y') if now else 'Hoy' }}
+                </span>
+            </div>
+        </div>
+
+        {% if insights and insights[0].tipo == 'resumen' %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm bg-primary text-white p-4" style="border-radius: 20px;">
+                    <div class="row align-items-center">
+                        <div class="col-md-1 text-center d-none d-md-block">
+                            <i class="bi bi-stars fs-1"></i>
+                        </div>
+                        <div class="col-md-11">
+                            <h5 class="fw-bold">Resumen de la IA</h5>
+                            <p class="mb-0 opacity-90 fs-5">{{ insights[0].descripcion }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% set insights = insights[1:] %}
+        {% endif %}
+
+        <div class="row g-3 mb-5">
+            <div class="col-md-3">
+                <div class="metric-pill shadow-sm">
+                    <small class="text-muted d-block mb-1">INGRESOS MES</small>
+                    <h3 class="fw-bold mb-0">${{ "{:,.0f}".format(ventas_mensuales[-1]) if ventas_mensuales else '0' }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-pill shadow-sm" style="border-left-color: #ffc107;">
+                    <small class="text-muted d-block mb-1">INSIGHTS GENERADOS</small>
+                    <h3 class="fw-bold mb-0">{{ insights|length }}</h3>
+                </div>
+            </div>
+            </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-5" style="border-radius: 20px;">
+            <ul class="nav nav-pills mb-4 g-2" id="chartTabs" role="tablist">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-ventas">Tendencia de Ventas</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-productos">Top Productos</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-predicciones">Stock Inteligente</button></li>
+            </ul>
+
+            <div class="tab-content pt-2">
+                <div class="tab-pane fade show active" id="tab-ventas">
+                    <div class="chart-container">
+                        <canvas id="ventasChartMain"></canvas>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="tab-productos">
+                    <div class="chart-container">
+                        <canvas id="productosChartMain"></canvas>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="tab-predicciones">
+                    <div class="chart-container">
+                        <canvas id="prediccionesChartMain"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="fw-bold mb-4">Recomendaciones Detalladas</h4>
+        <div class="row g-4">
+            {% for insight in insights %}
+            <div class="col-md-4">
+                <div class="card h-100 insight-card p-3 shadow-sm bg-white">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-3 bg-{{ insight.color }} bg-opacity-10 p-2 me-3">
+                            <i class="bi {{ insight.icono }} text-{{ insight.color }} fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold mb-0">{{ insight.titulo }}</h6>
+                    </div>
+                    <p class="text-muted small mb-3">{{ insight.descripcion }}</p>
+                    
+                    {% if insight.tipo == 'top_product' %}
+                        <div class="bg-light rounded p-2 text-center">
+                            <span class="d-block small text-muted">Ventas</span>
+                            <span class="fw-bold">{{ insight.cantidad }} unidades</span>
+                        </div>
+                    {% elif insight.tipo == 'prediccion' %}
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-{{ insight.color }}" style="width: {{ (insight.dias / 30 * 100)|round if insight.dias < 30 else 100 }}%"></div>
+                        </div>
+                        <small class="mt-1 d-block text-{{ insight.color }}">{{ insight.dias }} días restantes</small>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctxVentas = document.getElementById('ventasChartMain').getContext('2d');
+    
+    // Gradiente para el gráfico de líneas
+    const gradient = ctxVentas.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(13, 110, 253, 0.4)');
+    gradient.addColorStop(1, 'rgba(13, 110, 253, 0)');
+
+    new Chart(ctxVentas, {
+        type: 'line',
+        data: {
+            labels: {{ meses|tojson }},
+            datasets: [{
+                label: 'Ventas ($)',
+                data: {{ ventas_mensuales|tojson }},
+                fill: true,
+                backgroundColor: gradient,
+                borderColor: '#0d6efd',
+                borderWidth: 3,
+                tension: 0.4,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#0d6efd',
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { display: false } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Gráfico de Productos (Barra)
+    new Chart(document.getElementById('productosChartMain'), {
+        type: 'bar',
+        data: {
+            labels: [{% for i in insights if i.tipo == 'top_product' %}'{{ i.producto }}',{% endfor %}],
+            datasets: [{
+                data: [{% for i in insights if i.tipo == 'top_product' %}{{ i.cantidad }},{% endfor %}],
+                backgroundColor: '#0dcaf0',
+                borderRadius: 8
+            }]
+        },
+        options: { 
+            indexAxis: 'y',
+            maintainAspectRatio: false, 
+            plugins: { legend: { display: false } } 
+        }
+    });
+    // Gráfico de Predicciones/Stock (Barra)
+    const ctxPredicciones = document.getElementById('prediccionesChartMain').getContext('2d');
+    new Chart(ctxPredicciones, {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for i in insights if i.tipo == 'prediccion' %}
+                    {{ i.producto|tojson|safe }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Días de stock',
+                data: [
+                    {% for i in insights if i.tipo == 'prediccion' %}
+                        {{ i.dias }}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(255, 193, 7, 0.6)',
+                borderColor: '#ffc107',
+                borderWidth: 1
+            }]
+        },
+        options: { 
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+});
+const tabEl = document.querySelectorAll('button[data-bs-toggle="pill"]')
+tabEl.forEach(el => {
+    el.addEventListener('shown.bs.tab', function (event) {
+        window.dispatchEvent(new Event('resize'));
+    });
+});
+</script>
+{% endblock %}

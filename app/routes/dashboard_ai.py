@@ -5,12 +5,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 dashboard_ai_bp = Blueprint('dashboard_ai', __name__)
-
 @dashboard_ai_bp.route('/ia/dashboard')
 @login_required
 def dashboard_ia():
     if not getattr(current_user, 'is_admin', False):
-        return "Acceso denegado", 403
+        return render_template('dashboard_ia/analisis.html', insights=insights_para_vista)
 
     try:
         raw_insights = analizador.generar_insights() or []
@@ -29,6 +28,7 @@ def dashboard_ia():
                 "puntos": []
             }
         }
+        
 
         for item in raw_insights:
             tipo = item.get('tipo')
@@ -62,11 +62,11 @@ def dashboard_ia():
         else:
             insights_para_vista['metricas']['eficiencia'] = "60%"
 
-        return render_template('ia/admin_test.html', insights=insights_para_vista)
+        return render_template('dashboard_ia/analisis.html', insights=insights_para_vista)
 
     except Exception as e:
         logger.error(f"Error crítico en Dashboard IA: {str(e)}")
-        return render_template('ia/admin_test.html', insights={
+        return render_template('dashboard_ia/analisis.html', insights={
             "resumen": "Error al conectar con el motor de IA.",
             "metricas": {"ventas_proyectadas": "$0.00", "productos_criticos": 0, "eficiencia": "N/A"},
             "alertas": ["Error técnico al recuperar alertas."],

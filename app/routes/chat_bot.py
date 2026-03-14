@@ -1,75 +1,91 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
+from ..ia.config import chatbot 
+from ..models import ConversacionChatbot, MensajeChatbot
+from ..extensions import db
+from datetime import datetime
 import logging
 import time
-from ..ia.config import chatbot 
 
-chatbot_bp = Blueprint('chat_bot', __name__)
-
+# Usamos el prefijo /chatbot para coincidir con tu JS
+chatbot_bp = Blueprint('chatbot', __name__, url_prefix='/chatbot')
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- CONFIGURACIÓN DE RESPUESTAS RÁPIDAS (No tan exigente) ---
+# --- CONFIGURACIÓN DE RESPUESTAS RÁPIDAS (Se mantienen intactas) ---
 FAQ_RESPUESTAS = {
     "horario": "Nuestro horario de atención es de lunes a viernes de 8:00 AM a 6:00 PM, y sábados de 9:00 AM a 1:00 PM. 🕒",
-    "contacto": "Puedes contactarnos vía WhatsApp al +57 300 000 0000 o al correo soporte@laboratorio.com 📧",
-    "ubicación": "Estamos ubicados en la Calle Principal #123, Edificio Innovación, Piso 2. 📍",
-    "hola": "¡Hola! 👋 Soy tu asistente inteligente. ¿En qué puedo ayudarte con el stock o las ventas hoy?",
+    "contacto": "Puedes contactarnos vía WhatsApp al +591 XXXXXXXX o al correo soporte@tu-restaurante.com 📧",
+    "ubicación": "Estamos ubicados en Cochabamba, Calle Principal #123. 📍",
+    "hola": "¡Hola! 👋 Soy tu asistente inteligente. ¿En qué puedo ayudarte hoy?",
 }
 
-@chatbot_bp.route('/ia/chat')
+@chatbot_bp.route('/')
 @login_required
-def chat_page():
-    return render_template('ia/chat_test.html')
+def index(): # Este es el nombre de la función
+    conversaciones = ConversacionChatbot.query.filter_by(id_usuario=current_user.id).all()
+    return render_template('ia/chat_test.html', conversaciones=conversaciones)
 
-@chatbot_bp.route('/ia/chat/preguntar', methods=['POST'])
+@chatbot_bp.route('/preguntar', methods=['POST'])
 @login_required
 def preguntar():
     inicio_query = time.time()
     
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({'status': 'error', 'respuesta': 'No llegó información.'}), 400
-            
-        mensaje = data.get('mensaje', '').lower().strip() # Pasamos a minúsculas para comparar
+        pregunta = data.get('pregunta', '').strip()
+        id_conversacion = data.get('id_conversacion')
         
-        if not mensaje:
+        if not pregunta:
             return jsonify({'status': 'error', 'respuesta': 'El mensaje está vacío.'}), 400
+        if not id_conversacion:
+            nueva_conv = ConversacionChatbot(
+                id_usuario=current_user.id, 
+                fecha_inicio=datetime.utcnow()
+            )
+            db.session.add(nueva_conv)
+            db.session.commit()
+            id_conversacion = nueva_conv.id
 
-        # 1. VERIFICACIÓN RÁPIDA (FAQ)
-        for clave, respuesta_rapida in FAQ_RESPUESTAS.items():
-            if clave in mensaje:
-                return jsonify({
-                    'status': 'success',
-                    'respuesta': respuesta_rapida,
-                    'datos': None,
-                    'tiempo': 0.01  # Casi instantáneo
-                })
+        msg_usuario = MensajeChatbot(
+            id_conversacion=id_conversacion, 
+            mensaje=pregunta, 
+            es_usuario=True
+        )
+        db.session.add(msg_usuario)
 
-        # 2. SI NO ES PREGUNTA RÁPIDA, LLAMAMOS A LA IA
-        user_nombre = getattr(current_user, 'nombre', 'Usuario')
-        logger.info(f"Consulta IA - Usuario: {user_nombre} | Mensaje: {mensaje}")
+        respuesta_final = None
+    
+        for clave, faq in FAQ_RESPUESTAS.items():
+            if clave in pregunta.lower():
+                respuesta_final = faq
+                break
 
-        try:
-            resultado = chatbot.procesar_mensaje(mensaje)
-            
-            if not resultado or 'respuesta' not in resultado:
-                raise ValueError("La IA no generó una respuesta válida")
+        
+        if not respuesta_final:
+            try:
+                
+                resultado_ia = chatbot.procesar_mensaje(pregunta)
+                respuesta_final = resultado_ia.get('respuesta', 'No pude procesar eso.')
+            except Exception as ia_err:
+                logger.error(f"Error en motor IA: {ia_err}")
+                respuesta_final = "Lo siento, tuve un problema al conectar con la IA."
 
-            return jsonify({
-                'status': 'success',
-                'respuesta': resultado.get('respuesta'),
-                'datos': resultado.get('datos_ia'), 
-                'tiempo': round(time.time() - inicio_query, 2)
-            })
+        
+        msg_bot = MensajeChatbot(
+            id_conversacion=id_conversacion, 
+            mensaje=respuesta_final, 
+            es_usuario=False
+        )
+        db.session.add(msg_bot)
+        db.session.commit()
 
-        except Exception as ia_err:
-            logger.error(f"Error en motor IA: {ia_err}")
-            return jsonify({
-                'status': 'error',
-                'respuesta': "Lo siento, tuve un problema al procesar tu consulta. ¿Puedes intentar de nuevo?"
-            }), 500
+        return jsonify({
+            'status': 'success',
+            'respuesta': respuesta_final,
+            'id_conversacion': id_conversacion,
+            'tiempo': round(time.time() - inicio_query, 2)
+        })
 
     except Exception as e:
         logger.error(f"Error general en ruta preguntar: {e}")
