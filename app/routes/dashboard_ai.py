@@ -9,15 +9,12 @@ dashboard_ai_bp = Blueprint('dashboard_ai', __name__)
 @dashboard_ai_bp.route('/ia/dashboard')
 @login_required
 def dashboard_ia():
-    # Verificación de seguridad (Admin)
     if not getattr(current_user, 'is_admin', False):
         return "Acceso denegado", 403
 
     try:
-        # Obtenemos los insights directamente del motor de IA
         raw_insights = analizador.generar_insights() or []
         
-        # Estructura de datos para la vista (Template)
         insights_para_vista = {
             "resumen": "No hay un análisis disponible en este momento.",
             "metricas": {
@@ -26,10 +23,13 @@ def dashboard_ia():
                 "eficiencia": "0%"
             },
             "alertas": [],
-            "top_productos": []
+            "top_productos": [],
+            "grafica": {
+                "labels": [],
+                "puntos": []
+            }
         }
 
-        # Procesamiento de la lista raw_insights
         for item in raw_insights:
             tipo = item.get('tipo')
             descripcion = item.get('descripcion', '')
@@ -48,8 +48,12 @@ def dashboard_ia():
                 
             elif tipo == 'top_product':
                 insights_para_vista['top_productos'].append(item)
+                # Lógica para la gráfica
+                nombre = item.get('nombre') or item.get('producto') or 'Producto'
+                cantidad = item.get('total_vendido') or item.get('cantidad') or 0
+                insights_para_vista['grafica']['labels'].append(nombre)
+                insights_para_vista['grafica']['puntos'].append(cantidad)
 
-        # Cálculo de eficiencia dinámica basada en el stock crítico
         criticos = insights_para_vista['metricas']['productos_criticos']
         if criticos == 0:
             insights_para_vista['metricas']['eficiencia'] = "100%"
@@ -62,10 +66,10 @@ def dashboard_ia():
 
     except Exception as e:
         logger.error(f"Error crítico en Dashboard IA: {str(e)}")
-        # Respuesta de emergencia elegante
         return render_template('ia/admin_test.html', insights={
-            "resumen": "Error al conectar con el motor de IA o base de datos.",
+            "resumen": "Error al conectar con el motor de IA.",
             "metricas": {"ventas_proyectadas": "$0.00", "productos_criticos": 0, "eficiencia": "N/A"},
-            "alertas": ["El sistema no pudo recuperar las alertas en este momento."],
-            "top_productos": []
+            "alertas": ["Error técnico al recuperar alertas."],
+            "top_productos": [],
+            "grafica": {"labels": [], "puntos": []}
         })
