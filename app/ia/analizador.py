@@ -104,10 +104,17 @@ class AnalizadorInteligente:
         return alertas
     
     def _ventas_mes(self):
-        """Analiza ventas del mes actual"""
-        hoy = datetime.utcnow().date()
-        inicio_mes = hoy.replace(day=1)
+        """Analiza ventas del último mes con datos"""
         
+        # Obtener el último mes con ventas
+        ultima_venta = Pedido.query.order_by(Pedido.fecha.desc()).first()
+        if not ultima_venta:
+            return None
+        
+        ultima_fecha = ultima_venta.fecha
+        inicio_mes = ultima_fecha.replace(day=1)
+        
+        # Ventas del último mes con datos
         ventas_mes = db.session.query(
             func.sum(Pedido.total).label('total'),
             func.count(Pedido.id).label('cantidad')
@@ -116,7 +123,7 @@ class AnalizadorInteligente:
         ).first()
         
         if ventas_mes and ventas_mes.total:
-            # Comparar con mes anterior
+            # Mes anterior (mismo mes del año pasado o mes anterior)
             mes_anterior = inicio_mes - timedelta(days=1)
             inicio_mes_anterior = mes_anterior.replace(day=1)
             
@@ -131,22 +138,25 @@ class AnalizadorInteligente:
                 variacion = ((ventas_mes.total - ventas_mes_anterior) / ventas_mes_anterior) * 100
                 tendencia = "↑" if variacion > 0 else "↓"
             else:
-                variacion = 100
-                tendencia = "↑"
+                variacion = 0
+                tendencia = "→"
+            
+            nombre_mes = ultima_fecha.strftime('%B')
             
             return {
                 'tipo': 'ventas_mes',
-                'titulo': '💰 Ventas del Mes',
+                'titulo': f'💰 Ventas de {nombre_mes}',
                 'total': ventas_mes.total,
                 'cantidad': ventas_mes.cantidad,
+                'mes_anterior': ventas_mes_anterior,
                 'variacion': abs(variacion),
                 'tendencia': tendencia,
-                'descripcion': f'Ventas: ${ventas_mes.total:,.2f} ({ventas_mes.cantidad} pedidos). {tendencia} {abs(variacion):.1f}% vs mes anterior.',
-                'icono': 'bi-graph-up-arrow' if variacion > 0 else 'bi-graph-down-arrow',
-                'color': 'success' if variacion > 0 else 'danger'
+                'descripcion': f'Ventas en {nombre_mes}: ${ventas_mes.total:,.2f} ({ventas_mes.cantidad} pedidos). {tendencia} {abs(variacion):.1f}% vs mes anterior.',
+                'icono': 'bi-graph-up-arrow' if variacion > 0 else 'bi-graph-down-arrow' if variacion < 0 else 'bi-dash',
+                'color': 'success' if variacion > 0 else 'danger' if variacion < 0 else 'secondary'
             }
         return None
-    
+        
 
     def _generar_resumen_ejecutivo(self, insights):
         """Genera un resumen ejecutivo usando IA"""
@@ -247,42 +257,86 @@ class AnalizadorInteligente:
             return categorias_insights
         return []
 
+  
+
+
     def _generar_predicciones(self):
-        # Genera predicciones simples basadas en tendencias actuales, como productos que podrían agotarse pronto o categorías que podrían volverse populares. Esto ayuda a los administradores a anticipar problemas o oportunidades.
+        """Genera predicciones basadas en datos REALES de la BD"""
+        print("\n🔍 GENERANDO PREDICCIONES CON DATOS REALES...")
         predicciones = []
         
-        # Productos con stock BAJO (menos de 15) aunque no tengan muchas ventas
-        productos_analizar = db.session.query(
-            Producto,
+        # Obtener productos con stock y ventas
+        resultados = db.session.query(
+            Producto.id,
+            Producto.nombre,
+            Producto.stock,
             func.coalesce(func.sum(DetallePedido.cantidad), 0).label('total_vendido')
         ).outerjoin(DetallePedido).group_by(Producto.id).having(
-            Producto.stock > 0,
-            Producto.stock < 15  # ← UMBRAL MÁS BAJO
-        ).order_by(Producto.stock).limit(5).all()
+            Producto.stock > 0  # Solo productos con stock
+        ).all()
         
-        for producto, vendido in productos_analizar:
-            # Calcular días estimados (incluso sin ventas)
-            if vendido > 0:
-                ventas_diarias = vendido / 30  # promedio mensual
-                dias_restantes = int(producto.stock / ventas_diarias) if ventas_diarias > 0 else 999
-            else:
-                # Si no tiene ventas, asumir rotación lenta
-                dias_restantes = 30  # estimado
-            
-            if dias_restantes < 30:  # Menos de un mes
-                nivel = '🔴 Crítico' if dias_restantes < 7 else '🟡 Preventivo'
+        print(f"📊 Total productos analizados: {len(resultados)}")
+        
+        for producto_id, nombre, stock, vendido in resultados:
+            # Calcular días estimados
+            if vendido > 5:  # Mínimo de ventas para considerar
+                # 60 días de datos (Enero-Febrero)
+                ventas_diarias = vendido / 60
+                dias_restantes = int(stock / ventas_diarias) if ventas_diarias > 0 else 999
+                
+                # Determinar nivel de alerta
+                if dias_restantes < 7:
+                    nivel = '🔴 CRÍTICO'
+                    color = 'danger'
+                    icono = 'bi-exclamation-triangle-fill'
+                elif dias_restantes < 15:
+                    nivel = '🟡 PREVENTIVO'
+                    color = 'warning'
+                    icono = 'bi-exclamation-triangle-fill'
+                elif dias_restantes < 30:
+                    nivel = '🟢 SEGUIMIENTO'
+                    color = 'info'
+                    icono = 'bi-info-circle-fill'
+                else:
+                    continue  # Ignorar productos con mucho stock
+                    
+                print(f"   - {nombre}: stock={stock}, vendido={vendido}, días={dias_restantes} [{nivel}]")
+                
                 predicciones.append({
                     'tipo': 'prediccion',
-                    'titulo': '🔮 Predicción de Inventario',
-                    'producto': producto.nombre,
-                    'stock_actual': producto.stock,
+                    'titulo': f'{nivel} {nombre}',
+                    'producto': nombre,
+                    'stock': stock,
+                    'vendido': vendido,
                     'dias': dias_restantes,
                     'nivel': nivel,
-                    'descripcion': f'"{producto.nombre}" tiene {producto.stock} unidades. ' +
-                                (f'Podría agotarse en {dias_restantes} días ({nivel}).' if dias_restantes < 30 
-                                else 'Stock bajo, sin historial de ventas.'),
-                    'icono': 'bi-graph-up-arrow',
-                    'color': 'danger' if dias_restantes < 7 else 'warning'
+                    'descripcion': f'"{nombre}" tiene {stock} unidades. Con {vendido} ventas, podría agotarse en {dias_restantes} días.',
+                    'icono': icono,
+                    'color': color
+                })
+            
+            elif stock < 10:  # Stock bajo aunque no tenga ventas
+                nivel = '🟡 STOCK BAJO'
+                color = 'warning'
+                icono = 'bi-exclamation-triangle-fill'
+                
+                print(f"   - {nombre}: stock bajo ({stock}) sin ventas registradas")
+                
+                predicciones.append({
+                    'tipo': 'prediccion',
+                    'titulo': f'{nivel} {nombre}',
+                    'producto': nombre,
+                    'stock': stock,
+                    'vendido': 0,
+                    'dias': 999,
+                    'nivel': nivel,
+                    'descripcion': f'"{nombre}" tiene solo {stock} unidades. Sin historial de ventas, pero stock crítico.',
+                    'icono': icono,
+                    'color': color
                 })
         
-        return predicciones[:5]  # Top 5 predicciones
+        # Ordenar por días (más críticos primero)
+        predicciones.sort(key=lambda x: x['dias'] if x['dias'] != 999 else 999)
+        
+        print(f"✅ Total predicciones generadas: {len(predicciones)}")
+        return predicciones[:8]  # Top 8 predicciones
