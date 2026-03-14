@@ -183,7 +183,7 @@
                                         <small class="text-muted">{{ conv.fecha_inicio.strftime('%H:%M') }}</small>
                                     </div>
                                     <p class="mb-0 text-dark history-text">
-                                        {{ conv.mensajes.first().mensaje if conv.mensajes.first() else "Conversación vacía" }}
+                                        {{ (conv.mensajes|first).mensaje|striptags if conv.mensajes else "Conversación vacía" }}
                                     </p>
                                 </div>
                             </div>

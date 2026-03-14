@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, abort
 from flask_login import login_required, current_user
 from ..ia.config import chatbot 
 from ..models import ConversacionChatbot, MensajeChatbot
@@ -6,13 +6,12 @@ from ..extensions import db
 from datetime import datetime
 import logging
 import time
-
-# Usamos el prefijo /chatbot para coincidir con tu JS
 chatbot_bp = Blueprint('chatbot', __name__, url_prefix='/chatbot')
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- CONFIGURACIÓN DE RESPUESTAS RÁPIDAS (Se mantienen intactas) ---
+# --- CONFIGURACIÓN DE RESPUESTAS RÁPIDAS ---
 FAQ_RESPUESTAS = {
     "horario": "Nuestro horario de atención es de lunes a viernes de 8:00 AM a 6:00 PM, y sábados de 9:00 AM a 1:00 PM. 🕒",
     "contacto": "Puedes contactarnos vía WhatsApp al +591 XXXXXXXX o al correo soporte@tu-restaurante.com 📧",
@@ -22,9 +21,27 @@ FAQ_RESPUESTAS = {
 
 @chatbot_bp.route('/')
 @login_required
-def index(): # Este es el nombre de la función
-    conversaciones = ConversacionChatbot.query.filter_by(id_usuario=current_user.id).all()
-    return render_template('ia/chat_test.html', conversaciones=conversaciones)
+def index():
+    conversaciones = ConversacionChatbot.query.filter_by(
+        id_usuario=current_user.id
+    ).order_by(ConversacionChatbot.fecha_inicio.desc()).all()
+    
+    return render_template('chatbot/index.html', conversaciones=conversaciones)
+
+@chatbot_bp.route('/ver/<int:id>')
+@login_required
+def ver_conversacion(id):
+    conversacion = ConversacionChatbot.query.get_or_404(id)
+    if conversacion.id_usuario != current_user.id:
+        logger.warning(f"Usuario {current_user.id} intentó acceder al chat {id} sin permiso.")
+        abort(403) 
+    mensajes = MensajeChatbot.query.filter_by(
+        id_conversacion=id
+    ).order_by(MensajeChatbot.fecha.asc()).all()
+    
+    return render_template('chatbot/conversacion.html', 
+                           conversacion=conversacion, 
+                           mensajes=mensajes)
 
 @chatbot_bp.route('/preguntar', methods=['POST'])
 @login_required
@@ -35,9 +52,10 @@ def preguntar():
         data = request.get_json()
         pregunta = data.get('pregunta', '').strip()
         id_conversacion = data.get('id_conversacion')
-        
         if not pregunta:
             return jsonify({'status': 'error', 'respuesta': 'El mensaje está vacío.'}), 400
+        if len(pregunta) > 500:
+            return jsonify({'status': 'error', 'respuesta': 'Tu mensaje es demasiado largo. Por favor, sé más breve.'}), 400
         if not id_conversacion:
             nueva_conv = ConversacionChatbot(
                 id_usuario=current_user.id, 
@@ -46,7 +64,6 @@ def preguntar():
             db.session.add(nueva_conv)
             db.session.commit()
             id_conversacion = nueva_conv.id
-
         msg_usuario = MensajeChatbot(
             id_conversacion=id_conversacion, 
             mensaje=pregunta, 
@@ -60,18 +77,13 @@ def preguntar():
             if clave in pregunta.lower():
                 respuesta_final = faq
                 break
-
-        
         if not respuesta_final:
             try:
-                
                 resultado_ia = chatbot.procesar_mensaje(pregunta)
                 respuesta_final = resultado_ia.get('respuesta', 'No pude procesar eso.')
             except Exception as ia_err:
                 logger.error(f"Error en motor IA: {ia_err}")
                 respuesta_final = "Lo siento, tuve un problema al conectar con la IA."
-
-        
         msg_bot = MensajeChatbot(
             id_conversacion=id_conversacion, 
             mensaje=respuesta_final, 
@@ -79,7 +91,6 @@ def preguntar():
         )
         db.session.add(msg_bot)
         db.session.commit()
-
         return jsonify({
             'status': 'success',
             'respuesta': respuesta_final,
