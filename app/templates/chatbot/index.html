@@ -247,6 +247,7 @@
             mostrarTyping(false);
             agregarMensaje(data.respuesta, false);
             idConversacion = data.id_conversacion;
+            document.getElementById('mensajeInput').focus();
         })
         .catch(err => {
             mostrarTyping(false);
