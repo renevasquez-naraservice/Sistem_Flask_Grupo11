@@ -8,7 +8,7 @@ app = create_app()
 
 @app.route('/')
 def index():
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('landing.index'))  # Redirige a la página principal del restaurante
 
 @app.shell_context_processor
 def make_shell_context():
