@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}IA Business Intelligence{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.9);
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #003da5 100%);
+    }
+
+    .dashboard-container { background-color: #f4f7f6; min-height: 100vh; }
+    
+    .insight-card {
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .insight-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    .nav-pills .nav-link {
+        border-radius: 10px;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 10px 20px;
+    }
+
+    .nav-pills .nav-link.active {
+        background: var(--primary-gradient);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    }
+
+    .metric-pill {
+        border-radius: 12px;
+        background: white;
+        padding: 1.5rem;
+        border-left: 5px solid #0d6efd;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 350px;
+        width: 100%;
+    }
+</style>
+
+<div class="dashboard-container py-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a href="#">Admin</a></li>
+                        <li class="breadcrumb-item active">IA Insights</li>
+                    </ol>
+                </nav>
+                <h2 class="fw-bold mb-0">Análisis Inteligente</h2>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-white text-dark border p-2 mb-1">
+                    <i class="bi bi-calendar3 me-2"></i>{{ now.strftime('%d %b, %Y') if now else 'Hoy' }}
+                </span>
+            </div>
+        </div>
+
+        {% if insights and insights.resumen %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm bg-primary text-white p-4" style="border-radius: 20px;">
+                    <div class="row align-items-center">
+                        <div class="col-md-1 text-center d-none d-md-block">
+                            <i class="bi bi-stars fs-1"></i>
+                        </div>
+                        <div class="col-md-11">
+                            <h5 class="fw-bold">Resumen de la IA</h5>
+                            <p class="mb-0 opacity-90 fs-5">{{ insights.resumen }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row g-3 mb-5">
+            <div class="col-md-3">
+                <div class="metric-pill shadow-sm">
+                    <small class="text-muted d-block mb-1">INGRESOS MES (PROYECTADOS)</small>
+                    <h3 class="fw-bold mb-0">{{ insights.metricas.ventas_proyectadas }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-pill shadow-sm" style="border-left-color: #ffc107;">
+                    <small class="text-muted d-block mb-1">PRODUCTOS CRÍTICOS</small>
+                    <h3 class="fw-bold mb-0">{{ insights.metricas.productos_criticos }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-pill shadow-sm" style="border-left-color: #20c997;">
+                    <small class="text-muted d-block mb-1">EFICIENCIA DE STOCK</small>
+                    <h3 class="fw-bold mb-0">{{ insights.metricas.eficiencia }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-5" style="border-radius: 20px;">
+            <ul class="nav nav-pills mb-4 g-2" id="chartTabs" role="tablist">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-productos">Top Productos</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-alertas">Alertas Críticas</button></li>
+            </ul>
+
+            <div class="tab-content pt-2">
+                <div class="tab-pane fade show active" id="tab-productos">
+                    <div class="chart-container">
+                        <canvas id="productosChartMain"></canvas>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="tab-alertas">
+                    <div class="p-3">
+                        <h6 class="fw-bold">Alertas Activas</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for alerta in insights.alertas %}
+                            <li class="list-group-item border-0 ps-0 text-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>{{ alerta }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="fw-bold mb-4">Recomendaciones Detalladas</h4>
+        <div class="row g-4">
+            {% for prod in insights.top_productos %}
+            <div class="col-md-4">
+                <div class="card h-100 insight-card p-3 shadow-sm bg-white">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-3 bg-primary bg-opacity-10 p-2 me-3">
+                            <i class="bi bi-trophy text-primary fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold mb-0">{{ prod.nombre or prod.producto }}</h6>
+                    </div>
+                    <p class="text-muted small mb-3">Este producto es uno de los más vendidos en tu inventario actual.</p>
+                    <div class="bg-light rounded p-2 text-center">
+                        <span class="d-block small text-muted">Ventas registradas</span>
+                        <span class="fw-bold">{{ prod.total_vendido or prod.cantidad }} unidades</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctxProds = document.getElementById('productosChartMain').getContext('2d');
+    new Chart(ctxProds, {
+        type: 'bar',
+        data: {
+            labels: {{ insights.grafica.labels|tojson }},
+            datasets: [{
+                label: 'Cantidad Vendida',
+                data: {{ insights.grafica.puntos|tojson }},
+                backgroundColor: '#36FF7D',
+                borderRadius: 8
+            }]
+        },
+        data: {
+            labels: {{ insights.grafica.labels|tojson }},
+            datasets: [{
+                label: 'cantidad pedidos',
+                data: {{ insights.grafica.puntos|tojson }},
+                backgroundColor: '#36FF7D',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+    const tabEl = document.querySelectorAll('button[data-bs-toggle="pill"]')
+    tabEl.forEach(el => {
+        el.addEventListener('shown.bs.tab', function () {
+            window.dispatchEvent(new Event('resize'));
+        });
+    });
+});
+</script>
+{% endblock %}
