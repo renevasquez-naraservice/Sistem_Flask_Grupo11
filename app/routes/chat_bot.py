@@ -52,52 +52,54 @@ def preguntar():
         data = request.get_json()
         pregunta = data.get('pregunta', '').strip()
         id_conversacion = data.get('id_conversacion')
+        
         if not pregunta:
-            return jsonify({'status': 'error', 'respuesta': 'El mensaje está vacío.'}), 400
-        if len(pregunta) > 500:
-            return jsonify({'status': 'error', 'respuesta': 'Tu mensaje es demasiado largo. Por favor, sé más breve.'}), 400
-        if not id_conversacion:
+            return jsonify({'status': 'error', 'respuesta': 'Mensaje vacío'}), 400
+        
+        resultado_ia = chatbot.procesar_mensaje(pregunta, id_conversacion)
+        
+        
+        id_conversacion_real = resultado_ia.get('id_conversacion')
+        if not id_conversacion_real:
             nueva_conv = ConversacionChatbot(
-                id_usuario=current_user.id, 
+                id_usuario=current_user.id,
                 fecha_inicio=datetime.utcnow()
             )
             db.session.add(nueva_conv)
-            db.session.commit()
-            id_conversacion = nueva_conv.id
+            db.session.flush()
+            id_conversacion_real = nueva_conv.id
+    
         msg_usuario = MensajeChatbot(
-            id_conversacion=id_conversacion, 
-            mensaje=pregunta, 
+            id_conversacion=id_conversacion_real,
+            mensaje=pregunta,
             es_usuario=True
         )
         db.session.add(msg_usuario)
-
         respuesta_final = None
-    
+        
         for clave, faq in FAQ_RESPUESTAS.items():
             if clave in pregunta.lower():
                 respuesta_final = faq
                 break
         if not respuesta_final:
-            try:
-                resultado_ia = chatbot.procesar_mensaje(pregunta)
-                respuesta_final = resultado_ia.get('respuesta', 'No pude procesar eso.')
-            except Exception as ia_err:
-                logger.error(f"Error en motor IA: {ia_err}")
-                respuesta_final = "Lo siento, tuve un problema al conectar con la IA."
+            respuesta_final = resultado_ia.get('respuesta', 'No pude procesar eso.')
+        
         msg_bot = MensajeChatbot(
-            id_conversacion=id_conversacion, 
-            mensaje=respuesta_final, 
+            id_conversacion=id_conversacion_real,
+            mensaje=respuesta_final,
             es_usuario=False
         )
         db.session.add(msg_bot)
         db.session.commit()
+        
         return jsonify({
             'status': 'success',
             'respuesta': respuesta_final,
-            'id_conversacion': id_conversacion,
+            'id_conversacion': id_conversacion_real,
             'tiempo': round(time.time() - inicio_query, 2)
         })
-
+        
     except Exception as e:
-        logger.error(f"Error general en ruta preguntar: {e}")
-        return jsonify({'status': 'error', 'respuesta': 'Error interno del servidor.'}), 500
+        db.session.rollback()
+        logger.error(f"Error: {e}")
+        return jsonify({'status': 'error', 'respuesta': 'Error interno'}), 500
